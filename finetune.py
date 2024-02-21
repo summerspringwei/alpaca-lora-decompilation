@@ -31,19 +31,25 @@ def train(
     data_path: str = "yahma/alpaca-cleaned",
     output_dir: str = "./lora-alpaca",
     # training hyperparams
-    batch_size: int = 128,
-    micro_batch_size: int = 4,
-    num_epochs: int = 3,
+    batch_size: int = 64,
+    micro_batch_size: int = 64,
+    num_epochs: int = 1,
     learning_rate: float = 3e-4,
-    cutoff_len: int = 256,
-    val_set_size: int = 2000,
+    cutoff_len: int = 4096,
+    val_set_size: int = 28,
     # lora hyperparams
     lora_r: int = 8,
     lora_alpha: int = 16,
     lora_dropout: float = 0.05,
     lora_target_modules: List[str] = [
         "q_proj",
+        "k_proj",
         "v_proj",
+        "o_proj",
+        # for CodeLlama
+        "gate_proj",
+        "up_proj",
+        "down_proj"
     ],
     # llm hyperparams
     train_on_inputs: bool = True,  # if False, masks out inputs in loss
@@ -56,6 +62,7 @@ def train(
     wandb_log_model: str = "",  # options: false | true
     resume_from_checkpoint: str = None,  # either training checkpoint or final adapter
     prompt_template_name: str = "alpaca",  # The prompt template to use, will default to alpaca.
+    num_proc: int = 1,
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         print(
@@ -92,6 +99,7 @@ def train(
 
     device_map = "auto"
     world_size = int(os.environ.get("WORLD_SIZE", 1))
+    print(f"world_size: {world_size}")
     ddp = world_size != 1
     if ddp:
         device_map = {"": int(os.environ.get("LOCAL_RANK") or 0)}
@@ -182,6 +190,7 @@ def train(
         task_type="CAUSAL_LM",
     )
     model = get_peft_model(model, config)
+    # model.add_adapter("xcw", config)
 
     if data_path.endswith(".json") or data_path.endswith(".jsonl"):
         data = load_dataset("json", data_files=data_path)
@@ -215,13 +224,13 @@ def train(
             test_size=val_set_size, shuffle=True, seed=42
         )
         train_data = (
-            train_val["train"].shuffle().map(generate_and_tokenize_prompt)
+            train_val["train"].shuffle().map(generate_and_tokenize_prompt, num_proc=num_proc)
         )
         val_data = (
-            train_val["test"].shuffle().map(generate_and_tokenize_prompt)
+            train_val["test"].shuffle().map(generate_and_tokenize_prompt, num_proc=num_proc)
         )
     else:
-        train_data = data["train"].shuffle().map(generate_and_tokenize_prompt)
+        train_data = data["train"].shuffle().map(generate_and_tokenize_prompt, num_proc=num_proc)
         val_data = None
 
     if not ddp and torch.cuda.device_count() > 1:
@@ -236,18 +245,18 @@ def train(
         args=transformers.TrainingArguments(
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
-            warmup_steps=100,
+            warmup_steps=10,
             num_train_epochs=num_epochs,
             learning_rate=learning_rate,
-            fp16=True,
-            logging_steps=10,
+            bf16=True,
+            logging_steps=2,
             optim="adamw_torch",
             evaluation_strategy="steps" if val_set_size > 0 else "no",
             save_strategy="steps",
-            eval_steps=200 if val_set_size > 0 else None,
-            save_steps=200,
+            eval_steps=100 if val_set_size > 0 else None,
+            save_steps=100,
             output_dir=output_dir,
-            save_total_limit=3,
+            save_total_limit=5,
             load_best_model_at_end=True if val_set_size > 0 else False,
             ddp_find_unused_parameters=False if ddp else None,
             group_by_length=group_by_length,
@@ -260,12 +269,14 @@ def train(
     )
     model.config.use_cache = False
 
-    old_state_dict = model.state_dict
-    model.state_dict = (
-        lambda self, *_, **__: get_peft_model_state_dict(
-            self, old_state_dict()
-        )
-    ).__get__(model, type(model))
+    # model.state_dict is a function
+    # old_state_dict = model.state_dict
+    # bound state_dict to a lambda function with input args being self and old_state_dict()
+    # model.state_dict = (
+    #     lambda self, *_, **__: get_peft_model_state_dict(
+    #         self, old_state_dict()
+    #     )
+    # ).__get__(model, type(model))
 
     if torch.__version__ >= "2" and sys.platform != "win32":
         model = torch.compile(model)
