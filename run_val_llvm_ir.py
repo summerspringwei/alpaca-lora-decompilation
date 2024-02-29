@@ -27,7 +27,7 @@ def dump_llvm_module_to_cfg(file_path: str):
     return 0
 
 
-def verify_perfect_decompilation(predict_file: str, output_file: str):
+def verify_perfect_decompilation_text_based(predict_file: str, output_file: str):
     # 1. Compare the content of two llvm ir
     perfect = False
     with open(predict_file, "r") as f:
@@ -50,6 +50,19 @@ def verify_perfect_decompilation(predict_file: str, output_file: str):
     return perfect
 
 
+def verify_perfect_decompilation_llvm_ir(predict_file: str, output_file: str):
+    # 1. Compare the content of two llvm ir
+    perfect = False
+    cmd_out = subprocess.run(["llvm-diff", predict_file, output_file], capture_output=True, text=True)
+    if cmd_out.returncode == 0 and cmd_out.stdout == "":
+        perfect = True
+    else:
+        dir_path = os.path.dirname(predict_file)
+        diff_file = os.path.join(dir_path, "ir_diff.txt")
+        with open(diff_file, "w") as f:
+            f.write(cmd_out.stdout)
+            f.write(cmd_out.stderr)
+    return perfect
 
 def main(val_file_path: str = "val.json", out_dir: str = "val_result"):
     programs = json.load(open(val_file_path, 'r'))
@@ -70,7 +83,7 @@ def main(val_file_path: str = "val.json", out_dir: str = "val_result"):
         success_compile += ret_code
         dump_llvm_module_to_cfg(os.path.join(dir_path, "output.ll"))
         if ret_code == 1:
-            if verify_perfect_decompilation(os.path.join(dir_path, "predict.ll"), os.path.join(dir_path, "output.ll")):
+            if verify_perfect_decompilation_llvm_ir(os.path.join(dir_path, "predict.ll"), os.path.join(dir_path, "output.ll")):
                 perfect_compile += 1
     
     print(f"Total programs: {len(programs)}, of which {perfect_compile} are perfectly decompiled, {success_compile} are successfully compiled.")
