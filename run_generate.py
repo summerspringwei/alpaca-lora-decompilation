@@ -9,6 +9,8 @@ from peft import PeftModel
 import transformers
 from transformers import GenerationConfig, LlamaForCausalLM, LlamaTokenizer
 from utils.prompter import Prompter
+from datasets import load_dataset
+
 
 if torch.cuda.is_available():
     device = "cuda"
@@ -110,12 +112,20 @@ def main(load_8bit: bool = False,
     lora_weights: str = "tloen/alpaca-lora-7b",
     prompt_template: str = "",  # The prompt template to use, will default to alpaca.
     val_file: str = "val.json",
-    result_file: str = "val_result.json"
+    result_file: str = "val_result.json",
+    start_idx: int = 0,
+    end_idx: int = 0,
     ):
+    # programs = json.load(open(val_file))
+    programs = load_dataset("json", data_files=val_file).shuffle()["train"]
+    print(len(programs))
+    if end_idx == 0:
+        end_idx = len(programs)
+    programs = programs.select(range(start_idx, end_idx))
+
     prompter, tokenizer, model = get_model(
         load_8bit, base_model, lora_weights, prompt_template
     )
-    programs = json.load(open(val_file))
 
     results = []
     with open(result_file+"_inc", "w") as f:
@@ -132,6 +142,7 @@ def main(load_8bit: bool = False,
             f.write(",\n")
     with open(result_file, "w") as f:
         json.dump(results, f)
+
 
 if __name__ == "__main__":
     fire.Fire(main)

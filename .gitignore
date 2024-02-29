@@ -15,3 +15,8 @@ todo.txt
 .vscode
 *log
 xcw_alpaca_lora
+*.ll
+*.s
+*.o
+*.png
+decompilation_val

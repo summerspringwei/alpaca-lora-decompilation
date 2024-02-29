@@ -24,6 +24,7 @@ from transformers import LlamaForCausalLM, LlamaTokenizer
 
 from utils.prompter import Prompter
 
+transformers.logging.set_verbosity_debug()
 
 def train(
     # model/data params
@@ -62,7 +63,9 @@ def train(
     wandb_log_model: str = "",  # options: false | true
     resume_from_checkpoint: str = None,  # either training checkpoint or final adapter
     prompt_template_name: str = "alpaca",  # The prompt template to use, will default to alpaca.
-    num_proc: int = 1,
+    num_proc: int = 40,
+    data_start: int = 0,
+    data_end: int = 0
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         print(
@@ -218,7 +221,8 @@ def train(
             print(f"Checkpoint {checkpoint_name} not found")
 
     model.print_trainable_parameters()  # Be more transparent about the % of trainable params.
-
+    if data_end > data_start:
+        data["train"] = data["train"].select(range(data_start, data_end))
     if val_set_size > 0:
         train_val = data["train"].train_test_split(
             test_size=val_set_size, shuffle=True, seed=42
@@ -245,7 +249,7 @@ def train(
         args=transformers.TrainingArguments(
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
-            warmup_steps=10,
+            warmup_steps=100,
             num_train_epochs=num_epochs,
             learning_rate=learning_rate,
             bf16=True,
