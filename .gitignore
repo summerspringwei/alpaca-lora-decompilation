@@ -21,6 +21,6 @@ xcw_alpaca_lora
 *.png
 *.gv
 *.pdf
-decompilation_val
 decompile_llvm_ir_alphaca_phi-1_5_seq_len_4k
 decompile_llvm_ir_alphaca_starcoder2_seq_len_4k
+ir_diff.txt
