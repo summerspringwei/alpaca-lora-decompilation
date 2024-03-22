@@ -26,6 +26,12 @@ from transformers import LlamaForCausalLM, LlamaTokenizer
 from utils.prompter import Prompter
 
 transformers.logging.set_verbosity_debug()
+# refer to https://huggingface.co/docs/transformers/en/perf_train_gpu_one for details
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
+# We cannot use flash attention as we have to padding the input
+# torch.backends.cuda.enable_flash_sdp(False)
+# torch.backends.cuda.enable_math_sdp(True)
 
 def train(
     # model/data params
@@ -126,6 +132,7 @@ def train(
         load_in_8bit=True,
         torch_dtype=torch.bfloat16,
         device_map=device_map,
+        attn_implementation="flash_attention_2",
     )
 
     tokenizer = LlamaTokenizer.from_pretrained(base_model)
@@ -213,6 +220,7 @@ def train(
                 adapters_weights[k] = f.get_tensor(k)
             set_peft_model_state_dict(model, adapters_weights)
             print("Set peft model state dict")
+            resume_from_checkpoint = False
         # checkpoint_name = os.path.join(
         #     resume_from_checkpoint, "pytorch_model.bin"
         # )  # Full checkpoint
@@ -267,6 +275,7 @@ def train(
             bf16=True,
             logging_steps=2,
             optim="adamw_torch",
+            torch_compile=True,
             evaluation_strategy="steps" if val_set_size > 0 else "no",
             save_strategy="steps",
             eval_steps=100 if val_set_size > 0 else None,
