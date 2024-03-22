@@ -64,12 +64,25 @@ def verify_perfect_decompilation_llvm_ir(predict_file: str, output_file: str):
             f.write(cmd_out.stderr)
     return perfect
 
+
+def get_dataset_subdir_path(path: str, dataset_name = "AnghaBench"):
+    com = path.split("/")
+    start_idx = 0
+    for c, idx in zip(com, range(len(com))):
+        if c.find(dataset_name) >=0 :
+            start_idx = idx
+            break
+    return "/".join(com[start_idx:])
+
+
 def main(val_file_path: str = "val.json", out_dir: str = "val_result"):
     programs = json.load(open(val_file_path, 'r'))
-    
+    if not os.path.exists(out_dir):
+        print(f"Creating directory {out_dir}")
+        os.makedirs(out_dir, exist_ok=True)
     success_compile, perfect_compile = 0, 0
     for record in programs:
-        dir_path = os.path.join(out_dir, record["file:"].rstrip(".ll"))
+        dir_path = os.path.join(out_dir, get_dataset_subdir_path(record["file"]).rstrip(".ll"))
         Path(dir_path).mkdir(parents=True, exist_ok=True)
         with open(os.path.join(dir_path, "predict.ll"), "w") as f:
             content = record["predict"]
