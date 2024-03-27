@@ -90,7 +90,7 @@ def evaluate(
             top_p=top_p,
             top_k=top_k,
             do_sample=True,
-            num_return_sequences=4,
+            num_return_sequences=1,
             max_length=4096+1024,
             max_new_tokens=max_new_tokens,
             pad_token_id=tokenizer.pad_token_id,

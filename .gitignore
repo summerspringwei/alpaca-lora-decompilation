@@ -24,3 +24,4 @@ xcw_alpaca_lora
 ir_diff.txt
 *.json_inc
 checkpoints_decompilation/*
+decompile_llvm_ir_alphaca_deepseek-coder-1.3b-base_seq_len_4k-bbcount-2/*
