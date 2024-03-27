@@ -11,7 +11,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from utils.prompter import Prompter
 
 transformers.logging.set_verbosity_debug()
-
+torch.backends.cuda.enable_flash_sdp(False)
+torch.backends.cuda.enable_math_sdp(True)
 
 def main(
     base_model: str = "",  # the only required argument
@@ -174,9 +175,6 @@ def main(
         data = load_dataset("json", data_files=data_path)
     else:
         data = load_dataset(data_path)
-
-    if resume_from_checkpoint:
-        pass
     
     if data_end > data_start:
         data["train"] = data["train"].select(range(data_start, data_end))
@@ -207,7 +205,7 @@ def main(
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
             gradient_checkpointing=True,
-            warmup_steps=4,
+            warmup_steps=100,
             num_train_epochs=num_epochs,
             learning_rate=learning_rate,
             bf16=True,
@@ -215,8 +213,8 @@ def main(
             optim="adamw_torch",
             evaluation_strategy="steps" if val_set_size > 0 else "no",
             save_strategy="steps",
-            eval_steps=8 if val_set_size > 0 else None,
-            save_steps=8,
+            eval_steps=100 if val_set_size > 0 else None,
+            save_steps=100,
             output_dir=output_dir,
             save_total_limit=5,
             load_best_model_at_end=True if val_set_size > 0 else False,

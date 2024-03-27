@@ -26,20 +26,20 @@ export CUDA_VISIBLE_DEVICES=3 && python3 run_generate.py \
 
 
 
-export CUDA_VISIBLE_DEVICES=0,1 && accelerate launch run_generate.py \
+export CUDA_VISIBLE_DEVICES=1 && python3 run_generate.py \
     --base_model '/data0/xiachunwei/Dataset/CodeLlama-7b-hf' \
-    --lora_weights './decompile_llvm_ir_alphaca_lora_seq_len_4k_with_flashattn_maybe_wrong/checkpoint-4100' \
-    --val_file '/data0/xiachunwei/Dataset/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_bbcount-2_chat-tail-100.json' \
-    --result_file "./decompilation_val/result_bbcount-2_beamsearch-16_4.1K_AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_chat_tail-100.json" \
-    --start_idx 23 \
+    --lora_weights './checkpoints_decompilation/decompile_llvm_ir_alphaca_lora_seq_len_4k_with_flashattn_maybe_wrong/checkpoint-4100' \
+    --val_file '/data0/xiachunwei/Dataset/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_bbcount-2_chat-head-100.json' \
+    --result_file "./validation_decompilation/result_bbcount-2_beamsearch-16_4.1K_AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_chat_head-100.json" \
+    --start_idx 0 \
     --end_idx 100
 
 export CUDA_VISIBLE_DEVICES=0,1 && accelerate launch --num_processes 2 --config_file ./config.yaml run_generate_accelerate.py \
     --base_model '/data0/xiachunwei/Dataset/CodeLlama-7b-hf' \
     --lora_weights './decompile_llvm_ir_alphaca_lora_seq_len_4k_with_flashattn_maybe_wrong/checkpoint-4100' \
-    --val_file '/data0/xiachunwei/Dataset/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_bbcount-2_chat-tail-100.json' \
-    --result_file "./decompilation_val/result_bbcount-2_beamsearch-16_4.1K_AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_chat_tail-100.json" \
-    --start_idx 23 \
+    --val_file '/data0/xiachunwei/Dataset/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_bbcount-2_chat-head-100.json' \
+    --result_file "./decompilation_val/result_bbcount-2_beamsearch-16_4.1K_AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_chat_head-100.json" \
+    --start_idx 0 \
     --end_idx 100  > >(tee generatestdout.log) 2> >(tee generatestderr.log >&2)
 
 
