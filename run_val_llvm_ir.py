@@ -75,6 +75,17 @@ def get_dataset_subdir_path(path: str, dataset_name = "AnghaBench"):
     return "/".join(com[start_idx:])
 
 
+def pre_process_llvm_ir(content:str, file_path: str):
+    with open(file_path, "w") as f:
+        # For CodeLlama based tokenizer
+        if content.find("</s><s>"):
+            content = content.replace("</s><s>", "\n")
+        # For DeepSeekCoder based tokenizer
+        if content.find("<｜end▁of▁sentence｜><｜begin▁of▁sentence｜>"):
+            content = content.replace("<｜end▁of▁sentence｜><｜begin▁of▁sentence｜>", "\n")
+        f.write(content)
+
+
 def main(val_file_path: str = "val.json", out_dir: str = "val_result"):
     programs = json.load(open(val_file_path, 'r'))
     if not os.path.exists(out_dir):
@@ -86,10 +97,7 @@ def main(val_file_path: str = "val.json", out_dir: str = "val_result"):
         Path(dir_path).mkdir(parents=True, exist_ok=True)
         ret_code_list = []
         for idx, content in zip(range(len(record["predict"])), record["predict"]):
-            with open(os.path.join(dir_path, f"predict_{idx}.ll"), "w") as f:
-                if content.find("</s><s>"):
-                    content = content.replace("</s><s>", "\n")
-                f.write(content)
+            pre_process_llvm_ir(content, os.path.join(dir_path, f"predict_{idx}.ll"))
             ret_code = dump_llvm_module_to_cfg(os.path.join(dir_path, f"predict_{idx}.ll"))
             ret_code_list.append(ret_code)
         with open(os.path.join(dir_path, "output.ll"), "w") as f:

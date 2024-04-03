@@ -30,8 +30,8 @@ transformers.logging.set_verbosity_debug()
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
 # We cannot use flash attention as we have to padding the input
-# torch.backends.cuda.enable_flash_sdp(False)
-# torch.backends.cuda.enable_math_sdp(True)
+torch.backends.cuda.enable_flash_sdp(False)
+torch.backends.cuda.enable_math_sdp(True)
 
 def train(
     # model/data params
@@ -69,10 +69,12 @@ def train(
     wandb_watch: str = "",  # options: false | gradients | all
     wandb_log_model: str = "",  # options: false | true
     resume_from_checkpoint: str = None,  # either training checkpoint or final adapter
+    lora_checkpoint: str = None,  # only the LoRA part of the model
     prompt_template_name: str = "alpaca",  # The prompt template to use, will default to alpaca.
     num_proc: int = 40,
     data_start: int = 0,
-    data_end: int = 0
+    data_end: int = 0,
+    shuffle_data: bool = False
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         print(
@@ -132,7 +134,7 @@ def train(
         load_in_8bit=True,
         torch_dtype=torch.bfloat16,
         device_map=device_map,
-        attn_implementation="flash_attention_2",
+        # attn_implementation="flash_attention_2",
     )
 
     tokenizer = LlamaTokenizer.from_pretrained(base_model)
@@ -208,10 +210,10 @@ def train(
     else:
         data = load_dataset(data_path)
 
-    if resume_from_checkpoint:
+    if lora_checkpoint:
         # Check the available weights and load them
-        if os.path.exists(resume_from_checkpoint):
-            checkpoint_name = os.path.join(resume_from_checkpoint, "adapter_model.safetensors")
+        if os.path.exists(lora_checkpoint):
+            checkpoint_name = os.path.join(lora_checkpoint, "adapter_model.safetensors")
             from safetensors import safe_open
             f = safe_open(checkpoint_name, framework="pt", device="cuda")
             adapters_weights = {}
