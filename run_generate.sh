@@ -61,8 +61,25 @@ export CUDA_VISIBLE_DEVICES=1 && python3 run_generate_vllm.py \
 
 
 export CUDA_VISIBLE_DEVICES=1 && python3 run_generate_deepseekcoder.py \
-    --base_model '/data0/xiachunwei/Dataset/deepseek-coder-1.3b-base-angha-llvm-ir' \
+    --base_model '/data/xiachunwei/Dataset/deepseek-coder-1.3b-base-angha-llvm-ir' \
     --val_file '/data0/xiachunwei/Dataset/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_bbcount-2_chat-tail-100.json' \
     --result_file "./result_deepseek-coder_bbcount-2_4.1K_AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_chat_tail-100.json" \
     --start_idx 0 \
     --end_idx 100  > >(tee generatestdout.log) 2> >(tee generatestderr.log >&2)
+
+
+export CUDA_VISIBLE_DEVICES=1 && python3 run_generate_deepseekcoder.py \
+    --base_model '/data/xiachunwei/Datasets/Models/deepseek-coder-1.3b-base-angha-llvm-ir/' \
+    --val_file '/data/xiachunwei/Datasets/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_bbcount-2_chat-tail-100.json' \
+    --result_file "./tmp-result_deepseek-coder_bbcount-2_4.1K_AnghaBench-llvm-ir-llc-assembly-O2-seq_length-4K_chat_tail-100.json" \
+    --start_idx 0 \
+    --end_idx 100 --batch_size 16 > >(tee generatestdout.log) 2> >(tee generatestderr.log >&2)
+
+
+export CUDA_VISIBLE_DEVICES=1 && python3 run_generate_deepseekcoder.py \
+    --base_model '/data/xiachunwei/Datasets/Models/deepseek-coder-1.3b-base-angha-llvm-ir/' \
+    --val_file '/data/xiachunwei/Datasets/exebench/train_real_simple_io-llvm-assembly-batch.json' \
+    --result_file "./tmp-result_deepseek-coder_train_real_simple_io-llvm-assembly-batch.json" \
+    --batch_size 8 > >(tee generatestdout.log) 2> >(tee generatestderr.log >&2)
+
+

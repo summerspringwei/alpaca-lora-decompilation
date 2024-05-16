@@ -7,7 +7,8 @@ import torch
 import transformers
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
-
+# import wandb
+# wandb.login(key="1209d9b9028b4f6c51311256f95acfac28f722ce")
 from utils.prompter import Prompter
 
 transformers.logging.set_verbosity_debug()
@@ -80,7 +81,6 @@ def main(
         "WANDB_PROJECT" in os.environ and len(os.environ["WANDB_PROJECT"]) > 0
     )
 
-    torch.backends.cuda.enable_flash_sdp(True)
     def hook(module, input, output):
         print("hook")
         print(module)

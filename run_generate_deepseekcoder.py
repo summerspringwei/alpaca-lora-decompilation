@@ -1,6 +1,6 @@
 import os
 import json
-
+from typing import List
 
 import fire
 import torch
@@ -30,6 +30,7 @@ def get_model(
 
     prompter = Prompter(prompt_template)
     tokenizer = AutoTokenizer.from_pretrained(base_model)
+    tokenizer.padding_side = 'left'
     if device == "cuda":
         model = AutoModelForCausalLM.from_pretrained(
             base_model,
@@ -97,6 +98,50 @@ def evaluate(
         return result
 
 
+
+def evaluate_batch(
+        prompter, tokenizer, model,
+        instruction_list: List[str],
+        input_list: List[str]=None,
+        temperature=0.1,
+        top_p=0.75,
+        top_k=50,
+        num_beams=1,
+        max_new_tokens=2048+1024,
+        **kwargs,
+    ):
+        """Currently we only support generate one candidate for each input."""
+        prompt_list = [prompter.generate_prompt(instruction, input) for instruction, input in zip(instruction_list, input_list)]
+        # prompt = prompter.generate_prompt(instruction, input)
+        inputs = tokenizer(prompt_list, return_tensors="pt", padding=True, truncation=True)
+        input_ids = inputs["input_ids"].to(device)
+        generation_config = GenerationConfig(
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            do_sample=True,
+            num_return_sequences=1,
+            max_length=4096+1024,
+            max_new_tokens=max_new_tokens,
+            pad_token_id=tokenizer.pad_token_id,
+            eos_token_id=model.config.bos_token_id,
+            **kwargs,
+        )
+        # Without streaming
+        with torch.no_grad():
+            generation_output = model.generate(
+                input_ids=input_ids,
+                generation_config=generation_config,
+                return_dict_in_generate=True,
+                output_scores=True,
+                early_stopping=False
+            )
+            s = generation_output.sequences
+            outputs = tokenizer.batch_decode(s, skip_special_tokens=True)
+            results = [prompter.get_response(o) for o in outputs]
+        return results
+
+
 def main(load_8bit: bool = False,
     base_model: str = "",
     lora_weights: str = "",
@@ -105,6 +150,7 @@ def main(load_8bit: bool = False,
     result_file: str = "val_result.json",
     start_idx: int = 0,
     end_idx: int = 0,
+    batch_size: int = 1
     ):
     # programs = json.load(open(val_file))
     programs = load_dataset("json", data_files=val_file).shuffle()["train"]
@@ -118,20 +164,24 @@ def main(load_8bit: bool = False,
     )
 
     results = []
+    count = len(programs) // batch_size + 1
     with open(result_file+"_inc", "a") as f:
-        for p in tqdm(programs):
-            predict = evaluate(prompter, tokenizer, model, p["instruction"], input=p["input"])
-            val_out = {"instruction": p["instruction"], "input":p["input"], "predict": predict, "file": p["file"], "output": p["output"]}
-            results.append(val_out)
-            print("="*20)
-            print(p["output"])
-            print("-"*20)
-            print(predict)
-            print("="*20)
-            json.dump(val_out, f, indent=4, sort_keys=True, separators=(',', ':'))
-            f.write(",\n")
+        for i in range(count):
+            start = i * batch_size
+            end = min((i+1) * batch_size, len(programs))
+            batch_p = [p["instruction"] for p in programs.select(range(start, end))]
+            batch_input = [p["input"] for p in programs.select(range(start, end))]
+            batch_predict = evaluate_batch(prompter, tokenizer, model, batch_p, input_list=batch_input)
+            batch_output = [
+                {"instruction": p["instruction"], "input":p["input"], "predict": predict, "file": p["file"], "output": p["output"]}
+                for p, predict in zip(programs.select(range(start, end)), batch_predict)
+            ]
+            results.extend(batch_output)
+            for p in batch_output:
+                json.dump(p, f, indent=4, sort_keys=True, separators=(',', ':'))
+                f.write(",\n")
     with open(result_file, "w") as f:
-        json.dump(results, f)
+        json.dump(results, f, indent=4, sort_keys=True, separators=(',', ':'))
 
 
 if __name__ == "__main__":
