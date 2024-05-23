@@ -167,19 +167,23 @@ def main(load_8bit: bool = False,
     count = len(programs) // batch_size + 1
     with open(result_file+"_inc", "a") as f:
         for i in range(count):
-            start = i * batch_size
-            end = min((i+1) * batch_size, len(programs))
-            batch_p = [p["instruction"] for p in programs.select(range(start, end))]
-            batch_input = [p["input"] for p in programs.select(range(start, end))]
-            batch_predict = evaluate_batch(prompter, tokenizer, model, batch_p, input_list=batch_input)
-            batch_output = [
-                {"instruction": p["instruction"], "input":p["input"], "predict": predict, "file": p["file"], "output": p["output"]}
-                for p, predict in zip(programs.select(range(start, end)), batch_predict)
-            ]
-            results.extend(batch_output)
-            for p in batch_output:
-                json.dump(p, f, indent=4, sort_keys=True, separators=(',', ':'))
-                f.write(",\n")
+            try:
+                start = i * batch_size
+                end = min((i+1) * batch_size, len(programs))
+                batch_p = [p["instruction"] for p in programs.select(range(start, end))]
+                batch_input = [p["input"] for p in programs.select(range(start, end))]
+                batch_predict = evaluate_batch(prompter, tokenizer, model, batch_p, input_list=batch_input)
+                batch_output = [
+                    {"instruction": p["instruction"], "input":p["input"], "predict": predict, "file": p["file"], "output": p["output"]}
+                    for p, predict in zip(programs.select(range(start, end)), batch_predict)
+                ]
+                results.extend(batch_output)
+                for p in batch_output:
+                    json.dump(p, f, indent=4, sort_keys=True, separators=(',', ':'))
+                    f.write(",\n")
+            except Exception as e:
+                print(e)
+                continue
     with open(result_file, "w") as f:
         json.dump(results, f, indent=4, sort_keys=True, separators=(',', ':'))
 
