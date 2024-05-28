@@ -14,9 +14,8 @@ from transformers import (
     PreTrainedTokenizerBase
 )
 from transformers.utils.generic import PaddingStrategy
-from transformers.models.led.modeling_led import LEDLearnedPositionalEmbedding
-# from transformers.data.data_collator import pad_without_fast_tokenizer_warning
 
+from transformers.models.bart.modeling_bart import BartLearnedPositionalEmbedding
 
 @dataclass
 class MyDataCollatorForSeq2Seq:
@@ -62,15 +61,14 @@ class MyDataCollatorForSeq2Seq:
     return_tensors: str = "pt"
 
     def __call__(self, batch, return_tensors=None):
-        encoder_max_length = 1536
-        decoder_max_length = 1536
+        encoder_max_length = 1024*6
+        decoder_max_length = 1024*6
         global_head_num_attn = 64
         global_tail_num_attn = 256
         window_size = 1024
         input_list = [f["input"] for f in batch]
         inputs = tokenizer(
             input_list,
-            # padding="longest",
             padding="max_length",
             truncation=True,
             max_length=encoder_max_length,
@@ -78,7 +76,6 @@ class MyDataCollatorForSeq2Seq:
         output_list = [f["output"] for f in batch]
         outputs = tokenizer(
             output_list,
-            # padding="longest",
             padding="max_length",
             truncation=True,
             max_length=decoder_max_length,
@@ -108,14 +105,15 @@ class MyDataCollatorForSeq2Seq:
             for labels in features["labels"]
         ]
         features["labels"] = torch.tensor(features["labels"], dtype=torch.long)
-        
+        features.pop("global_attention_mask")
         return features
 
 
 # load rouge
 rouge = load_metric("rouge")
 
-model_path = "/data/xiachunwei/Datasets/Models/led-large-16384"
+# model_path = "/data/xiachunwei/Datasets/Models/led-large-16384"
+model_path = "/data/xiachunwei/Datasets/Models/bart-large"
 
 batch_size = 8
 dataset_train = load_from_disk("/data/xiachunwei/Datasets/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-16K_bbcount-2-average-2_chat_train_sort")
@@ -165,7 +163,9 @@ def compute_metrics(pred):
 led = AutoModelForSeq2SeqLM.from_pretrained(model_path, gradient_checkpointing=True, use_cache=False)
 
 # Note, important, change the decoder module's position embedding size to 8192*1024
-led.base_model.decoder.embed_positions = LEDLearnedPositionalEmbedding(8192, 1024)
+led.base_model.encoder.embed_positions = BartLearnedPositionalEmbedding(8192, 1024)
+nn.init.xavier_uniform_(led.base_model.encoder.embed_positions.weight)
+led.base_model.decoder.embed_positions = BartLearnedPositionalEmbedding(8192, 1024)
 nn.init.xavier_uniform_(led.base_model.decoder.embed_positions.weight)
 
 # set generate hyperparameters
@@ -175,6 +175,8 @@ led.config.min_length = 100
 led.config.length_penalty = 2.0
 led.config.early_stopping = True
 led.config.no_repeat_ngram_size = 3
+
+
 
 # instantiate trainer
 trainer = Seq2SeqTrainer(
