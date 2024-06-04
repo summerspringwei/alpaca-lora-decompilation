@@ -14,8 +14,10 @@ from transformers import (
     PreTrainedTokenizerBase
 )
 from transformers.utils.generic import PaddingStrategy
-
 from transformers.models.bart.modeling_bart import BartLearnedPositionalEmbedding
+
+encoder_max_length = 1024*7
+decoder_max_length = 1024*9
 
 @dataclass
 class MyDataCollatorForSeq2Seq:
@@ -61,22 +63,20 @@ class MyDataCollatorForSeq2Seq:
     return_tensors: str = "pt"
 
     def __call__(self, batch, return_tensors=None):
-        encoder_max_length = 1024*6
-        decoder_max_length = 1024*6
         global_head_num_attn = 64
         global_tail_num_attn = 256
         window_size = 1024
         input_list = [f["input"] for f in batch]
         inputs = tokenizer(
             input_list,
-            padding="max_length",
+            padding="longest",
             truncation=True,
             max_length=encoder_max_length,
         )
         output_list = [f["output"] for f in batch]
         outputs = tokenizer(
             output_list,
-            padding="max_length",
+            padding="longest",
             truncation=True,
             max_length=decoder_max_length,
         )
@@ -128,14 +128,15 @@ training_args = Seq2SeqTrainingArguments(
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
     bf16=True,
-    output_dir="./",
+    output_dir="./bart-large-decompilation",
     logging_steps=250,
     eval_steps=5000,
     save_steps=500,
     warmup_steps=1500,
     save_total_limit=2,
-    gradient_accumulation_steps=1,
-    remove_unused_columns=False
+    gradient_accumulation_steps=8,
+    remove_unused_columns=False,
+    gradient_checkpointing=True
 )
 
 tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -163,27 +164,25 @@ def compute_metrics(pred):
 led = AutoModelForSeq2SeqLM.from_pretrained(model_path, gradient_checkpointing=True, use_cache=False)
 
 # Note, important, change the decoder module's position embedding size to 8192*1024
-led.base_model.encoder.embed_positions = BartLearnedPositionalEmbedding(8192, 1024)
+led.base_model.encoder.embed_positions = BartLearnedPositionalEmbedding(encoder_max_length, 1024)
 nn.init.xavier_uniform_(led.base_model.encoder.embed_positions.weight)
-led.base_model.decoder.embed_positions = BartLearnedPositionalEmbedding(8192, 1024)
+led.base_model.decoder.embed_positions = BartLearnedPositionalEmbedding(decoder_max_length, 1024)
 nn.init.xavier_uniform_(led.base_model.decoder.embed_positions.weight)
 
 # set generate hyperparameters
 led.config.num_beams = 4
-led.config.max_length = 8192
+led.config.max_length = encoder_max_length
 led.config.min_length = 100
 led.config.length_penalty = 2.0
 led.config.early_stopping = True
 led.config.no_repeat_ngram_size = 3
-
-
 
 # instantiate trainer
 trainer = Seq2SeqTrainer(
     model=led,
     tokenizer=tokenizer,
     args=training_args,
-    compute_metrics=compute_metrics,
+    # compute_metrics=compute_metrics,
     train_dataset=dataset_train,
     eval_dataset=dataset_val,
     data_collator=MyDataCollatorForSeq2Seq(
