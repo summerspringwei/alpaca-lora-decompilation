@@ -72,6 +72,7 @@ class MyDataCollatorForSeq2Seq:
             padding="longest",
             truncation=True,
             max_length=encoder_max_length,
+            pad_to_multiple_of=self.pad_to_multiple_of
         )
         output_list = [f["output"] for f in batch]
         outputs = tokenizer(
@@ -85,18 +86,18 @@ class MyDataCollatorForSeq2Seq:
         features["attention_mask"] = torch.tensor(inputs.attention_mask, dtype=torch.long)
 
         # create 0 global_attention_mask lists
-        features["global_attention_mask"] = len(features["input_ids"]) * [
-            [0 for _ in range(len(features["input_ids"][0]))]
-        ]
+        # features["global_attention_mask"] = len(features["input_ids"]) * [
+        #     [0 for _ in range(len(features["input_ids"][0]))]
+        # ]
 
-        # since above lists are references, the following line changes the 0 index for all samples
-        if global_head_num_attn < len(features["input_ids"][0]) and len(features["input_ids"][0]) > window_size:
-            for i in range(len(features["global_attention_mask"])):
-                for j in range(0, global_head_num_attn):
-                    features["global_attention_mask"][i][j] = 1
-                for j in range(0, global_tail_num_attn):
-                    features["global_attention_mask"][i][-1-j] = 1
-        features["global_attention_mask"] = torch.tensor(features["global_attention_mask"], dtype=torch.long)
+        # # since above lists are references, the following line changes the 0 index for all samples
+        # if global_head_num_attn < len(features["input_ids"][0]) and len(features["input_ids"][0]) > window_size:
+        #     for i in range(len(features["global_attention_mask"])):
+        #         for j in range(0, global_head_num_attn):
+        #             features["global_attention_mask"][i][j] = 1
+        #         for j in range(0, global_tail_num_attn):
+        #             features["global_attention_mask"][i][-1-j] = 1
+        # features["global_attention_mask"] = torch.tensor(features["global_attention_mask"], dtype=torch.long)
         features["labels"] = outputs.input_ids
 
         # We have to make sure that the PAD token is ignored
@@ -105,14 +106,13 @@ class MyDataCollatorForSeq2Seq:
             for labels in features["labels"]
         ]
         features["labels"] = torch.tensor(features["labels"], dtype=torch.long)
-        features.pop("global_attention_mask")
+        # features.pop("global_attention_mask")
         return features
 
 
 # load rouge
 rouge = load_metric("rouge")
 
-# model_path = "/data/xiachunwei/Datasets/Models/led-large-16384"
 model_path = "/data/xiachunwei/Datasets/Models/bart-large"
 
 batch_size = 8
@@ -128,7 +128,7 @@ training_args = Seq2SeqTrainingArguments(
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
     bf16=True,
-    output_dir="./bart-large-decompilation",
+    output_dir="./bart-large-decompilation-random",
     logging_steps=250,
     eval_steps=5000,
     save_steps=500,

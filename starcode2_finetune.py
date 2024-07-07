@@ -5,15 +5,15 @@ from typing import List
 import fire
 import torch
 import transformers
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from transformers import AutoTokenizer, AutoModelForCausalLM
 # import wandb
 # wandb.login(key="1209d9b9028b4f6c51311256f95acfac28f722ce")
 from utils.prompter import Prompter
 
 transformers.logging.set_verbosity_debug()
-torch.backends.cuda.enable_flash_sdp(False)
-torch.backends.cuda.enable_math_sdp(True)
+# torch.backends.cuda.enable_flash_sdp(False)
+# torch.backends.cuda.enable_math_sdp(True)
 
 def main(
     base_model: str = "",  # the only required argument
@@ -81,28 +81,7 @@ def main(
         "WANDB_PROJECT" in os.environ and len(os.environ["WANDB_PROJECT"]) > 0
     )
 
-    def hook(module, input, output):
-        print("hook")
-        print(module)
-        print("input:")
-        if isinstance(input, torch.Tensor):
-            print(input.shape)
-        elif isinstance(input, List) or isinstance(input, tuple):
-            for i in input:
-                if isinstance(i, torch.Tensor):
-                    print(i.shape)
-        print("output:")
-        if isinstance(output, torch.Tensor):
-            print(output.shape)
-        elif isinstance(output, List) or isinstance(output, tuple):
-            for i in output:
-                if isinstance(i, torch.Tensor):
-                    print(i.shape)
-        
-    # torch.nn.modules.module.register_module_forward_hook(hook, always_call=True)
-    
-
-        # Only overwrite environ if wandb param passed
+    # Only overwrite environ if wandb param passed
     if len(wandb_project) > 0:
         os.environ["WANDB_PROJECT"] = wandb_project
     if len(wandb_watch) > 0:
@@ -110,7 +89,6 @@ def main(
     if len(wandb_log_model) > 0:
         os.environ["WANDB_LOG_MODEL"] = wandb_log_model
     
-
     model = AutoModelForCausalLM.from_pretrained(
         base_model,
         load_in_8bit=False,
@@ -128,10 +106,8 @@ def main(
         # but again, gotta move fast
         result = tokenizer(
             prompt,
-            truncation=True,
-            max_length=cutoff_len,
-            padding=False,
-            return_tensors=None,
+            padding='max_length',
+            max_length=cutoff_len, truncation=True, return_tensors=None
         )
         if (
             result["input_ids"][-1] != tokenizer.eos_token_id
@@ -173,13 +149,16 @@ def main(
 
     if data_path.endswith(".json") or data_path.endswith(".jsonl"):
         data = load_dataset("json", data_files=data_path)
+        data = data["train"]
+    elif os.path.isdir(data_path):
+        data = load_from_disk(data_path)
     else:
         data = load_dataset(data_path)
     
     if data_end > data_start:
-        data["train"] = data["train"].select(range(data_start, data_end))
+        data = data.select(range(data_start, data_end))
     if val_set_size > 0:
-        train_val = data["train"].train_test_split(
+        train_val = data.train_test_split(
             test_size=val_set_size, shuffle=True, seed=42
         )
         train_data = (
@@ -189,13 +168,17 @@ def main(
             train_val["test"].shuffle().map(generate_and_tokenize_prompt, num_proc=num_proc)
         )
     else:
-        train_data = data["train"].shuffle().map(generate_and_tokenize_prompt, num_proc=num_proc)
+        train_data = data.shuffle().map(generate_and_tokenize_prompt, num_proc=num_proc)
         val_data = None
     
     if not ddp and torch.cuda.device_count() > 1:
         # keeps Trainer from trying its own DataParallelism when more than 1 gpu is available
         model.is_parallelizable = True
         model.model_parallel = True
+    
+    model.config.use_cache = False
+    if torch.__version__ >= "2" and sys.platform != "win32":
+        model = torch.compile(model)
     
     trainer = transformers.Trainer(
         model=model,
@@ -227,7 +210,7 @@ def main(
             tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
         ),
     )
-    model.config.use_cache = False
+    
     trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
     model.save_pretrained(output_dir)

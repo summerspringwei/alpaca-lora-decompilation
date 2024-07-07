@@ -62,8 +62,8 @@ class MyDataCollatorForSeq2Seq:
     return_tensors: str = "pt"
 
     def __call__(self, batch, return_tensors=None):
-        encoder_max_length = 1536
-        decoder_max_length = 1536
+        encoder_max_length = 4096
+        decoder_max_length = 4096
         global_head_num_attn = 64
         global_tail_num_attn = 256
         window_size = 1024
@@ -117,8 +117,8 @@ rouge = load_metric("rouge")
 
 model_path = "/data/xiachunwei/Datasets/Models/led-large-16384"
 
-batch_size = 8
-dataset_train = load_from_disk("/data/xiachunwei/Datasets/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-16K_bbcount-2-average-2_chat_train_sort")
+batch_size = 1
+dataset_train = load_from_disk("/data/xiachunwei/Datasets/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-16K_bbcount-2-average-2_chat_train_sort").select(range(30*1024, 31*1024))
 dataset_val = load_from_disk("/data/xiachunwei/Datasets/decompilation-dataset/AnghaBench-llvm-ir-llc-assembly-O2-seq_length-16K_bbcount-2-average-2_chat_val_sort")
 dataset_train.remove_columns("file")
 dataset_val.remove_columns("file")
