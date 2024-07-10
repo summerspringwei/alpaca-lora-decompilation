@@ -11,6 +11,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 from datasets import load_dataset, load_from_disk
 from safetensors import safe_open
 import logging
+from vllm import LLM, SamplingParams
 if torch.cuda.is_available():
     device = "cuda"
 else:
@@ -72,47 +73,86 @@ def evaluate_batch(
         return results
 
 
+
+def vllm_evaluate_batch(
+        prompter, llm,
+        instruction_list: List[str],
+        input_list: List[str]=None,
+        temperature=0.1,
+        top_p=0.95,
+        top_k=10,
+        num_beams=1,
+        max_new_tokens=1024*2,
+        **kwargs,
+    ):
+        """Currently we only support generate one candidate for each input."""
+        prompt_list = [prompter.generate_prompt(instruction, input) for instruction, input in zip(instruction_list, input_list)]
+        sampling_params = SamplingParams(
+            top_k=10,
+            temperature=0.1,
+            top_p=0.95,
+            max_tokens=4096,
+            min_tokens=128
+        )
+        sequences = llm.generate(prompt_list, sampling_params)
+        results = [seq.outputs[0].text for seq in sequences]
+        return results
+
+
+
 def exebench_evaluate(
     programs,
     prompter, tokenizer, model,
     result_file: str = "val_result.json",
-    batch_size: int = 1
+    batch_size: int = 1,
+    llm = None
     ):
     results = []
     count = len(programs) // batch_size
     with open(result_file+"_inc", "a") as f:
         for i in range(count):
-            # try:
+            if i*batch_size < 68:
+                continue
+            try:
                 start = i * batch_size
                 end = min((i+1) * batch_size, len(programs))
                 batch_p = [input_str] * batch_size
                 batch_input = [p["asm"]["code"][-1] for p in programs.select(range(start, end))]
-                batch_predict = evaluate_batch(prompter, tokenizer, model, batch_p, input_list=batch_input)
+                if llm is not None:
+                    batch_predict = vllm_evaluate_batch(prompter, llm, batch_p, input_list=batch_input)
+                else:
+                    batch_predict = evaluate_batch(prompter, tokenizer, model, batch_p, input_list=batch_input)
                 batch_output = [
-                    {"instruction":input_str, 
-                     "input":p["asm"]["target"][-1], "predict": predict, "file": p["path"], "output": p["llvm_ir"]["code"]}
+                    {
+                        "instruction":input_str, 
+                        "input":p["asm"]["code"][-1], 
+                        "predict": predict, 
+                        "file": p["path"], 
+                        "output": p["llvm_ir"]["code"],
+                        "func_head_types": p["func_head_types"]
+                    }
                     for p, predict in zip(programs.select(range(start, end)), batch_predict)
                 ]
-
                 results.extend(batch_output)
                 for p in batch_output:
                     json.dump(p, f, indent=4, sort_keys=True, separators=(',', ':'))
                     f.write(",\n")
                     f.flush()
-            # except Exception as e:
-            #     logging.error(e)
-            #     continue
+            except Exception as e:
+                logging.error(e)
     with open(result_file, "w") as f:
         json.dump(results, f, indent=4, sort_keys=True, separators=(',', ':'))
 
 
-def exebench_main():
-    pretrained_model_path = model = "/data/xiachunwei/Datasets/Models/llm-compiler-13b-ftd"
-    model, tokenizer = get_llmcompiler_model(pretrained_model_path)
+def exebench_main(batch_size = 8):
+    pretrained_model_path = "/data/xiachunwei/Datasets/Models/llm-compiler-13b-ftd"
+    # model, tokenizer = get_llmcompiler_model(pretrained_model_path)
+    model, tokenizer = None, None
     prompter = Prompter("llmcompiler")
     path = "/data/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2"
     programs = load_from_disk(path)
-    exebench_evaluate(programs, prompter, tokenizer, model, result_file="exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd", batch_size=2)
+    llm = LLM(model=pretrained_model_path, max_num_seqs=batch_size)
+    exebench_evaluate(programs, prompter, tokenizer, model, result_file="exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd", batch_size=batch_size, llm=llm)
 
 
 if __name__ == "__main__":
