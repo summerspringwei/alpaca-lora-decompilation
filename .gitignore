@@ -28,3 +28,11 @@ tmp*
 validate_exebench/
 test.py
 *.pickle
+example_with_bug/
+example_wo_bug/
+*.json
+*_inc
+*_inc.bak
+exebench_train_synth_rich_io*
+bart_exebench_train_synth_rich_io*
+deepseek-coder-1.3b*
