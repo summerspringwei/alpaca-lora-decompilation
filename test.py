@@ -1,68 +1,31 @@
-import torch
-from vllm import LLM, SamplingParams
-if torch.cuda.is_available():
-        device = "cuda"
-else:
-        device = "cpu"
 
-path = "/home/xiachunwei/Datasets/Models/CodeLlama-7b-hf/"
-# llm = LLM(model=path)
-# PROMPT = '''def remove_non_ascii(s: str) -> str:
-#         """ <FILL_ME>
-#             return result
-#             '''
-# input_list = [PROMPT, PROMPT, PROMPT, PROMPT]
-# sampling_params = SamplingParams(
-#         n=16,
-#         # top_k=-1,
-#         # temperature=0,
-#         # top_p=1,
-#         max_tokens=128,
-#         min_tokens=16,
-#         # temperature=0.8, top_p=0.95
-#         temperature=0, top_p=1,
-#         use_beam_search=True
-#         )
-# sequences = llm.generate(input_list, sampling_params)
-# for seq in sequences:
-#     print("----"*20)
-#     for out in seq.outputs:
-#         print(out.text)
-# # print(sequences)
+import json
+import re
+import utils
+
+from utils import preprocessing_assembly
+
+def extract_llmcompiler_code_blocks(text):
+    pattern = re.compile(r'<code>(.*?)</code>', re.DOTALL)
+    matches = pattern.findall(text)
+    return matches
+
+datas = json.load(open("ppo-llm-compiler-bs-32-mbs-8.json", 'r'))
+
+for record in datas:
+    print('-'*20)
+    out = extract_llmcompiler_code_blocks(record['predict'])
+    print(record['input'])
+    if len(out) > 0:
+        print(out[0])
+    print('-'*20)
 
 
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, AutoModelForSequenceClassification
-from trl import AutoModelForCausalLMWithValueHead
+a = '.ident  "clang version 17.0.0 (https://github.com/llvm/llvm-project.git 88bf774c565080e30e0a073676c316ab175303af)"'
+b = '.file   "exebench_lscat-ACT41_2318108cwm4j9m1.c"'
+from transformers import AutoTokenizer
+file_path = "facebook/llm-compiler-7b-ftd"
+tokenizer = AutoTokenizer.from_pretrained(file_path)
 
-model = AutoModelForCausalLMWithValueHead.from_pretrained(
-    path, num_labels=1, torch_dtype=torch.bfloat16
-)
-print(model)
-
-# from transformers import AutoTokenizer
-# import transformers
-# import torch
-
-# model = "facebook/llm-compiler-7b-ftd"
-
-# tokenizer = AutoTokenizer.from_pretrained(model)
-# pipeline = transformers.pipeline(
-#     "text-generation",
-#     model=model,
-#     torch_dtype=torch.float16,
-#     device_map="auto",
-# )
-
-# sequences = pipeline(
-#     '%3 = alloca i32, align 4',
-#     do_sample=True,
-#     top_k=10,
-#     temperature=0.1,
-#     top_p=0.95,
-#     num_return_sequences=1,
-#     eos_token_id=tokenizer.eos_token_id,
-#     max_length=200,
-# )
-# for seq in sequences:
-#     print(f"Result: {seq['generated_text']}")
-
+print(len(tokenizer(a)['input_ids']))
+print(len(tokenizer(b)['input_ids']))

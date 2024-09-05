@@ -17,7 +17,7 @@ from peft import (
     LoraConfig,
     get_peft_model,
     get_peft_model_state_dict,
-    prepare_model_for_int8_training,
+    prepare_model_for_kbit_training,
     set_peft_model_state_dict,
     PeftModel
 )
@@ -134,6 +134,7 @@ def train(
         load_in_8bit=True,
         torch_dtype=torch.bfloat16,
         device_map=device_map,
+        
         # attn_implementation="flash_attention_2",
     )
 
@@ -192,7 +193,7 @@ def train(
             ]  # could be sped up, probably
         return tokenized_full_prompt
 
-    model = prepare_model_for_int8_training(model)
+    model = prepare_model_for_kbit_training(model)
 
     config = LoraConfig(
         r=lora_r,
@@ -209,7 +210,7 @@ def train(
         data = load_dataset("json", data_files=data_path)
     else:
         data = load_dataset(data_path)
-
+    # data = data['train'].select(0, 2048)
     if lora_checkpoint:
         # Check the available weights and load them
         if os.path.exists(lora_checkpoint):
@@ -242,6 +243,7 @@ def train(
         #     print(f"Checkpoint {checkpoint_name} not found")
 
     model.print_trainable_parameters()  # Be more transparent about the % of trainable params.
+    data_start, data_end = 0, 2048
     if data_end > data_start:
         data["train"] = data["train"].select(range(data_start, data_end))
     if val_set_size > 0:

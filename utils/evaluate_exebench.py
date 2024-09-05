@@ -49,7 +49,7 @@ def extract_function_name_from_C(declaration):
         return None
 
 
-def compile_predicted_record(record: Dict, validation_dir: str = "./validate_exebench")->bool:
+def compile_predicted_record(record: Dict, validation_dir: str = "./tmp_validate_exebench")->bool:
     """Compile the llvm ir to assembly and save the results to the validation directory, return true if success compile"""
     predict_llvm_ir = record['predict']
     target_llvm_ir = record['output']
@@ -135,7 +135,10 @@ def eval_assembly(row: Dict, assembly: str) -> bool:
 
 
 
-def validate_by_execution(record: Dict, row: Dict)->bool:
+def validate_by_execution(record: Dict, row: Dict)->Dict:
+    matched_predict_llvm_ir = extract_llmcompiler_code_blocks(record["predict"])
+    if matched_predict_llvm_ir and len(matched_predict_llvm_ir) > 0:
+        record["predict"] = matched_predict_llvm_ir[0]
     predict_success, predict_assembly_path, target_success, target_assembly_path = compile_predicted_record(record)
     predict_execution_success, target_execution_success = False, False
     # Validate the predict assembly
@@ -175,6 +178,9 @@ def extract_llmcompiler_code_blocks(text):
     pattern = re.compile(r'<code>(.*?)</code>', re.DOTALL)
     matches = pattern.findall(text)
     return matches
+
+
+
 
 
 def validate_exebench(path_to_json: str, path_to_dataset: str):
