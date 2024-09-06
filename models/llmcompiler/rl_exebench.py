@@ -80,7 +80,7 @@ class ScriptArguments:
         metadata={"help": "a baseline value that is subtracted from the reward"},
     )
     batched_gen: Optional[bool] = field(default=False, metadata={"help": "whether to use the batched text gen"})
-    save_freq: Optional[int] = field(default=100, metadata={"help": "n steps to save the model"})
+    save_freq: Optional[int] = field(default=10, metadata={"help": "n steps to save the model"})
     output_dir: Optional[str] = field(default="runs/", metadata={"help": "n steps to save the model"})
     seed: Optional[int] = field(default=0, metadata={"help": "the seed"})
     steps: Optional[int] = field(default=3200, metadata={"help": "number of epochs"})
