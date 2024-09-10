@@ -1,6 +1,4 @@
 import torch
-
-a = torch.tensor([1, 2, 3]).to('cuda')
-b = torch.tensor([4, 5, 6]).to('cuda')
-print(a + b)
-
+a="branch conditionality differs"
+b='function @set_logging_level exists only in right module'
+print(a in b)
