@@ -1,3 +1,11 @@
+"""
+python3 utils/merge_peft_weights_to_llama.py \
+    --base_model /home/xiachunwei/Datasets/Models/llm-compiler-13b-ftd  \
+    --merged_model /home/xiachunwei/Datasets/Models/llm-compiler-13b-ftd-rl-ppo-step-40 \
+    --peft_weight_dir /home/xiachunwei/Projects/checkpoints-decompilation/rl-ppo-llmcompiler-13b-all-runs-bak/step_40 
+"""
+
+
 import os
 import torch
 from peft import PeftModel

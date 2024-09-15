@@ -9,6 +9,7 @@ from typing import Dict
 from multiprocessing import Pool
 
 import tqdm
+import fire
 from datasets import load_from_disk
 from exebench import Wrapper, diff_io, exebench_dict_to_dict, LLVMAssembler
 
@@ -16,7 +17,7 @@ from utils.extract_code import extract_llmcompiler_code_blocks
 
 logging.basicConfig(format='%(asctime)s - %(filename)s:%(lineno)s - %(message)s ', level=logging.INFO)
 
-validation_dir = "/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench"
+validation_dir = "/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench2"
 
 def compile_target_ir(target_llvm_ir: str, full_path: str)->bool:
     target_llvm_ir_path = os.path.join(full_path, "target.ll")
@@ -155,8 +156,21 @@ def wrapper(args):
     return validate_by_execution(*args)
 
 
+def format_path_and_func_def(path: str, func_def: str)->str:
+    return str(path)+":"+str(func_def)
+
+
 def preprocess_records(all_records: list[Dict])->Dict:
-    path_to_record_mapping = {} # Mapping from file path to (predict_record, row)
+    """Preprocess the records to make sure the format is correct.
+    Note the record here means the output of the LLM model with instruction and assembly code.
+
+    Parameters:
+    all_records: list[Dict], the output of the LLM model with instruction and assembly code.
+
+    Returns:
+    path_to_record_mapping: Dict, a mapping from the (file_path:func_def) to the record.
+    """
+    path_to_record_mapping = {}
     for record in tqdm.tqdm(all_records):
         # Preprocessing the LLM output here:
         if isinstance(record["predict"], str):
@@ -171,49 +185,46 @@ def preprocess_records(all_records: list[Dict])->Dict:
                     else:
                         # logging.error(f"Cannot find code block in {predict}")
                         logging.error(f"Cannot find code block in {record['file']}")
+                        new_predict_list.append(predict)
                 if predict.find("aarch64") >= 0:
                     logging.error(f"Find aarch64 in {record['file']}")
             record["predict"] = new_predict_list
-        path_to_record_mapping[record['file']] = record
+        
+        path_to_record_mapping[format_path_and_func_def(record['file'], record["func_head_types"])] = record
+
     return path_to_record_mapping
 
 
-def match_record_with_row(path_to_record_mapping: Dict, path_to_row_mapping: Dict, all_records: list[Dict]):
+def match_record_with_row(path_to_record_mapping: Dict, path_to_row_mapping: Dict):
     # We need also to make sure the function name is the same
     path_to_record_row_mapping = {}
-    for record in all_records:
-        record_func = record['func_head_types']
-        if record['file'] in path_to_row_mapping:
-            for row in path_to_row_mapping[record['file']]:
-                row_func = row['func_head_types']
-                if record_func == row_func:
-                    path_to_record_row_mapping[record['file']] = (path_to_record_mapping[record['file']], row)
-                    break
+    for path_func_def, record in path_to_record_mapping.items():
+        if path_func_def in path_to_row_mapping:
+            path_to_record_row_mapping[path_func_def] = (record, path_to_row_mapping[path_func_def])
         else:
-            logging.error(f"Cannot find record for {record['file']}")
+            logging.error(f"Cannot find record for {path_func_def}")
     return path_to_record_row_mapping
 
-def validate_exebench(path_to_json: str, path_to_dataset: str, path_to_result: str):
+        
+def validate_exebench(path_to_json: str = "fexebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-step-80-bs-32-beams-1.json", 
+                      path_to_dataset: str = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2", 
+                      path_to_result: str = "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-step-80-bs-32-beams-1_validate_exebench.json"):
     dataset = load_from_disk(
         path_to_dataset
     )
     path_to_row_mapping = {}
     for row in dataset:
-        if row["path"] not in path_to_row_mapping.keys():
-            path_to_row_mapping[row['path']] = [row,]
-        else:
-            path_to_row_mapping[row['path']].append(row)
-            logging.info(f"Duplicate path: {row['path']}")
+        path_to_row_mapping[format_path_and_func_def(row['path'], row["func_head_types"])] = row
     if os.path.exists(validation_dir):
         shutil.rmtree(validation_dir)
     pathlib.Path(validation_dir).mkdir(parents=True, exist_ok=True)
     all_records = json.load(open(path_to_json, 'r'))
     path_to_record_mapping = preprocess_records(all_records)
-    path_to_record_row_mapping = match_record_with_row(path_to_record_mapping, path_to_row_mapping, all_records)
+    path_to_record_row_mapping = match_record_with_row(path_to_record_mapping, path_to_row_mapping)
 
     # Run in parallel
     args = [value for _, value in path_to_record_row_mapping.items()]
-    with Pool(processes=40) as pool:
+    with Pool(processes=80) as pool:
         results = pool.map(wrapper, args)
     
     predict_compile_results = [any(r["predict_compile_success"]) if isinstance(r, dict) else False for r in results]
@@ -234,7 +245,6 @@ if __name__ == "__main__":
     # path_to_dataset = "/data/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_ir_assembly_O2"
     # path_to_json = "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd.json"
     # path_to_json = "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd.json"
-    path_to_json = "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-beams-8.json"
-    path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2"
-    result_file = "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-beams-8_validate_exebench.json"
-    validate_exebench(path_to_json, path_to_dataset, result_file)
+    # path_to_json = "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-beams-8.json"
+    
+    fire.Fire(validate_exebench)

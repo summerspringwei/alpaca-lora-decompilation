@@ -1,17 +1,15 @@
-path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_2_llvm_extract_func_ir_assembly_O2"
-bb_count_binary: str = "/home/xiachunwei/Projects/llm4compiler/src/cpp/build/count_llvm_ir_bb"
-
+"""This module is for filter the dataset by the llvm-diff tool"""
 import tqdm
 import subprocess
 import tempfile
 import numpy as np
 
-from datasets import load_from_disk
+import fire
+from datasets import load_from_disk, Dataset
+from typing import Dict, List
 
 from analysis.count_bb import set_bb_count, get_bulk_list
 
-# llvm_diff = "/home/xiachunwei/Software/clang+llvm-17.0.2-x86_64-linux-gnu-ubuntu-22.04/bin//llvm-mdiff"
-llvm_diff = "/home/xiachunwei/Software/llvm-project/mybuilddir/bin/llvm-mdiff"
 
 def write_to_tmp_file(code: str):
     f = tempfile.NamedTemporaryFile(delete=True, mode='w')
@@ -21,7 +19,17 @@ def write_to_tmp_file(code: str):
     return f
 
 
+llvm_diff = "/home/xiachunwei/Software/llvm-project/mybuilddir/bin/llvm-mdiff"
+
+
 def analyze_the_diff(diff: str)->bool:
+    """Analyze the log of llvm-diff to determine whether the two llvm irs are different
+    Args:
+        diff: log of llvm-diff
+    
+    Returns:
+        bool: whether the two llvm irs are different
+    """
     diff_msg_list = ["different argument counts", 
                      "called functions differ",
                      "argument counts differ",
@@ -50,20 +58,7 @@ def analyze_the_diff(diff: str)->bool:
     return diff
 
 
-def test():
-    train_dataset = load_from_disk(
-        path_to_dataset
-    )
-    train_dataset = train_dataset.map(set_bb_count, num_proc=8)
-    bulk_len_record = get_bulk_list(train_dataset)
-    # Get the records with the same bb count
-    bb_count = 1
-    if bb_count not in bulk_len_record.keys():
-        raise ValueError("bb_count not in bulk_len_record")
-    records_with_same_bb = bulk_len_record[bb_count]
-    # Get the records with the same instruction count
-    inst_count = 8
-    record_list = [record for record in records_with_same_bb if np.sum(record['llvm_ir']['bb_count']['bb_list_size']) == inst_count]
+def get_record_list_from_bb_count(record_list: List[Dict]) -> List[List[Dict]]:
     file_list = [write_to_tmp_file(record['llvm_ir']['code'][-1]) for record in record_list]
     same_type_list = [(record_list[0], file_list[0]), ]
     type_list = [same_type_list, ]
@@ -85,8 +80,6 @@ def test():
                 print(diff)
             else:
                 print(f"error diff {f1.name} and {f2.name}")
-            # diff = cmd_out.stderr.decode("utf-8")
-            # print(diff)
             # is_diff = analyze_the_diff(diff)
             # if not is_diff:
             #     current_type_list.append((record, f2))
@@ -94,17 +87,50 @@ def test():
             #     break
         if not find_same_type:
             type_list.append([(record, f2), ])
-    
     print(f"total {len(record_list)} alltypes {len(type_list)}")
     type_list.sort(key=lambda x: len(x), reverse=True)
-    for type in type_list:
-        print(";"*20)
-        print(";",len(type))
-        print(type[0][0]['llvm_ir']['code'][-1])
+    for same_type in type_list:
+        # print(";"*20)
+        print(";",len(same_type))
+        # print(type[0][0]['llvm_ir']['code'][-1])
+    return type_list
 
 
+def filter_by_llvm_diff(path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2",
+    result_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff"):
+    # 1. Load dataset and set the number of BB, 
+    train_dataset = load_from_disk(
+        path_to_dataset
+    )
+    train_dataset = train_dataset.map(set_bb_count, num_proc=8)
+    bulk_len_record = get_bulk_list(train_dataset)
+    # 2. get the records with the same BB count
+    bb_count = 1
+    if bb_count not in bulk_len_record.keys():
+        raise ValueError("bb_count not in bulk_len_record")
+    records_with_same_bb = bulk_len_record[bb_count]
+    new_dataset = []
+    min_num_inst, max_num_inst = 1, 10
+    # 3. Get the records with the same instruction count, currently we only filter the records with instruction count from 1 to 9
+    for inst_count in range(min_num_inst, max_num_inst):
+        record_list = [record for record in records_with_same_bb if np.sum(record['llvm_ir']['bb_count']['bb_list_size']) == inst_count]
+        type_list = get_record_list_from_bb_count(record_list)
+        for same_type_list in type_list:
+            new_dataset.extend([same_type_list[0][0] for same_type_list in type_list])
+    # 4. Get the records with the instruction count greater than 10
+    new_dataset.extend([
+        record for record in bulk_len_record[bb_count] 
+        if np.sum(record['llvm_ir']['bb_count']['bb_list_size']) >= max_num_inst
+    ])
+    for bb_count, records in bulk_len_record.items():
+        if bb_count == 1:
+            continue
+        for record in records:
+            new_dataset.append(record)
+    
+    filtered_dataset = Dataset.from_list(new_dataset)
+    filtered_dataset.save_to_disk(result_path)
 
         
 if __name__ == "__main__":
-    test()
-# ['/home/xiachunwei/Software/clang+llvm-17.0.2-x86_64-linux-gnu-ubuntu-22.04/bin//llvm-diff', '/tmp/tmpuecl71xl', '/tmp/tmpl3zrwidm']
+    fire.Fire(filter_by_llvm_diff)

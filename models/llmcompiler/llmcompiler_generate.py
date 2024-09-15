@@ -1,15 +1,26 @@
+"""Module for evaluating the model on ExeBench dataset using vllm.
 
+Typical useage example:
+
+export CUDA_VISIBLE_DEVICES=2 && python3 models/llmcompiler/llmcompiler_generate.py \
+    --batch_size 32 --num_beams 1 \
+    --pretrained_model_path "/home/xiachunwei/Datasets/Models/llm-compiler-13b-ftd-rl-ppo-step-40" \
+    --dataset_path "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2" \
+    --result_file f"exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-step-40-bs-32-beams-1"
+
+"""
 import json
 import logging
-from typing import List, Dict
+from typing import List
 
+import fire
 import torch
 from tqdm import tqdm
 from utils.prompter import Prompter
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
-from datasets import load_from_disk
-
 from vllm import LLM, SamplingParams
+from datasets import load_from_disk
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+
 if torch.cuda.is_available():
     device = "cuda"
 else:
@@ -86,8 +97,7 @@ def vllm_evaluate_batch(
     top_p=0.95,
     top_k=10,
     num_beams=1,
-    max_new_tokens=1024 * 2,
-    **kwargs,
+    max_new_tokens=1024 * 4
 ):
     """Currently we only support generate one candidate for each input."""
     prompt_list = [
@@ -95,11 +105,11 @@ def vllm_evaluate_batch(
         for instruction, input in zip(instruction_list, input_list)
     ]
     if num_beams == 1:
-        sampling_params = SamplingParams(top_k=10,
-                                         temperature=0.1,
-                                         top_p=0.95,
-                                         max_tokens=128,
-                                         min_tokens=128)
+        sampling_params = SamplingParams(top_k=top_k,
+                                         temperature=temperature,
+                                         top_p=top_p,
+                                         max_tokens=max_new_tokens,
+                                         min_tokens=256)
     else:
         # This is for beam search in vllm
         sampling_params = SamplingParams(n=num_beams,
@@ -173,14 +183,29 @@ def exebench_evaluate(programs,
         json.dump(results, f, indent=4, sort_keys=True, separators=(',', ':'))
 
 
-def exebench_main(batch_size=1):
-    pretrained_model_path = "/home/xiachunwei/Datasets/Models/llm-compiler-13b-ftd"
+def exebench_main(batch_size=1, num_beams = 8, 
+                  pretrained_model_path = "/home/xiachunwei/Datasets/Models/llm-compiler-13b-ftd",
+                  dataset_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2",
+                  result_file = f"exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-beams-8",
+    ):
+    
     # model, tokenizer = get_llmcompiler_model(pretrained_model_path)
     model, tokenizer = None, None
     prompter = Prompter("llmcompiler")
-    num_beams = 8
-    path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2"
-    programs = load_from_disk(path)
+    # Sort the programs by length
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path)
+
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path)
+    
+    programs = load_from_disk(dataset_path)
+    # programs = programs.select(range(64))
+
+    def get_length(p):
+        p['asm_len'] = len(tokenizer(p["asm"]["code"][-1])['input_ids'])
+        return p
+    programs = programs.map(get_length, num_proc=40)
+    programs = programs.sort("asm_len")
+
     if batch_size > 1:
         llm = LLM(model=pretrained_model_path, max_num_seqs=batch_size)
     else:
@@ -190,13 +215,11 @@ def exebench_main(batch_size=1):
         prompter,
         tokenizer,
         model,
-        result_file=
-        f"exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-beams-{num_beams}",
+        result_file=result_file,
         batch_size=batch_size,
         llm=llm,
         num_beams=num_beams)
 
 
 if __name__ == "__main__":
-    # fire.Fire(main)
-    exebench_main()
+    fire.Fire(exebench_main)
