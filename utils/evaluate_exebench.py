@@ -17,7 +17,7 @@ from utils.extract_code import extract_llmcompiler_code_blocks
 
 logging.basicConfig(format='%(asctime)s - %(filename)s:%(lineno)s - %(message)s ', level=logging.INFO)
 
-validation_dir = "/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench2"
+validation_dir = "/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench"
 
 def compile_target_ir(target_llvm_ir: str, full_path: str)->bool:
     target_llvm_ir_path = os.path.join(full_path, "target.ll")
@@ -115,7 +115,10 @@ def validate_by_execution(record: Dict, row: Dict)->Dict:
     file_path = record['file']
     full_path = os.path.join(validation_dir, file_path)
     pathlib.Path(full_path).mkdir(parents=True, exist_ok=True)
-    target_success, target_assembly_path = compile_target_ir(record["output"][0], full_path)
+    if isinstance(record["output"], list):
+        record["output"] = record["output"][0]
+    target_success, target_assembly_path = compile_target_ir(record["output"], full_path)
+    target_execution_success = False
     # Validate the target assembly
     if target_success:
         try:
@@ -133,7 +136,7 @@ def validate_by_execution(record: Dict, row: Dict)->Dict:
         record["predict_execution_success"] = []
         for predict in record["predict"]:
             predict_success, predict_assembly_path = compile_predicted_record(predict, full_path)
-            predict_execution_success, target_execution_success = False, False
+            predict_execution_success = False
             # Validate the predict assembly
             if predict_success:
                 try:

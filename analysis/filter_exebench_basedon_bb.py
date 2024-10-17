@@ -58,7 +58,7 @@ def analyze_the_diff(diff: str)->bool:
     return diff
 
 
-def get_record_list_from_bb_count(record_list: List[Dict]) -> List[List[Dict]]:
+def get_record_list_from_bb_count(record_list: List[Dict]) -> List[List[tuple]]:
     file_list = [write_to_tmp_file(record['llvm_ir']['code'][-1]) for record in record_list]
     same_type_list = [(record_list[0], file_list[0]), ]
     type_list = [same_type_list, ]
@@ -96,8 +96,8 @@ def get_record_list_from_bb_count(record_list: List[Dict]) -> List[List[Dict]]:
     return type_list
 
 
-def filter_by_llvm_diff(path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2",
-    result_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff"):
+def filter_by_llvm_diff(path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_2_llvm_extract_func_ir_assembly_O2",
+    result_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_2_llvm_extract_func_ir_assembly_O2_llvm_diff"):
     # 1. Load dataset and set the number of BB, 
     train_dataset = load_from_disk(
         path_to_dataset
@@ -115,8 +115,8 @@ def filter_by_llvm_diff(path_to_dataset = "/home/xiachunwei/Datasets/filtered_ex
     for inst_count in range(min_num_inst, max_num_inst):
         record_list = [record for record in records_with_same_bb if np.sum(record['llvm_ir']['bb_count']['bb_list_size']) == inst_count]
         type_list = get_record_list_from_bb_count(record_list)
-        for same_type_list in type_list:
-            new_dataset.extend([same_type_list[0][0] for same_type_list in type_list])
+        new_dataset.extend([same_type_list[0][0] for same_type_list in type_list])
+        print(f"Process {inst_count} instruction count")
     # 4. Get the records with the instruction count greater than 10
     new_dataset.extend([
         record for record in bulk_len_record[bb_count] 
@@ -131,6 +131,6 @@ def filter_by_llvm_diff(path_to_dataset = "/home/xiachunwei/Datasets/filtered_ex
     filtered_dataset = Dataset.from_list(new_dataset)
     filtered_dataset.save_to_disk(result_path)
 
-        
+
 if __name__ == "__main__":
     fire.Fire(filter_by_llvm_diff)
