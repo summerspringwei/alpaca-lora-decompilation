@@ -132,5 +132,13 @@ def filter_by_llvm_diff(path_to_dataset = "/home/xiachunwei/Datasets/filtered_ex
     filtered_dataset.save_to_disk(result_path)
 
 
+
+def filter_all():
+    src_dir = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_{}_llvm_extract_func_ir_assembly_O2"
+    dst_dir = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_{}_llvm_extract_func_ir_assembly_O2_llvm_diff"
+    for i in range(3, 8):
+        filter_by_llvm_diff(src_dir.format(i), dst_dir.format(i))
+
 if __name__ == "__main__":
     fire.Fire(filter_by_llvm_diff)
+    # filter_all()
