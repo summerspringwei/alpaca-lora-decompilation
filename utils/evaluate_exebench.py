@@ -17,7 +17,7 @@ from utils.extract_code import extract_llmcompiler_code_blocks
 
 logging.basicConfig(format='%(asctime)s - %(filename)s:%(lineno)s - %(message)s ', level=logging.INFO)
 
-validation_dir = "/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench"
+# validation_dir = "/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench"
 
 def compile_target_ir(target_llvm_ir: str, full_path: str)->bool:
     target_llvm_ir_path = os.path.join(full_path, "target.ll")
@@ -110,10 +110,10 @@ def eval_assembly(row: Dict, assembly: str) -> bool:
         return success
 
 
-def validate_by_execution(record: Dict, row: Dict)->Dict:
+def validate_by_execution(record: Dict, row: Dict, validation_dir:str)->Dict:
     # 1. First validate the target assembly
     file_path = record['file']
-    full_path = os.path.join(validation_dir, file_path)
+    full_path = os.path.join(validation_dir, file_path, row['fname'])
     pathlib.Path(full_path).mkdir(parents=True, exist_ok=True)
     if isinstance(record["output"], list):
         record["output"] = record["output"][0]
@@ -153,7 +153,7 @@ def validate_by_execution(record: Dict, row: Dict)->Dict:
 
 
 def wrapper(args):
-    if len(args) != 2 or not isinstance(args[0], dict) or not isinstance(args[1], dict):
+    if len(args) != 3 or not isinstance(args[0], dict) or not isinstance(args[1], dict):
         logging.error(f"Invalid input: {args}")
         return None
     return validate_by_execution(*args)
@@ -211,7 +211,8 @@ def match_record_with_row(path_to_record_mapping: Dict, path_to_row_mapping: Dic
         
 def validate_exebench(path_to_json: str = "fexebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-step-80-bs-32-beams-1.json", 
                       path_to_dataset: str = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2", 
-                      path_to_result: str = "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-step-80-bs-32-beams-1_validate_exebench.json"):
+                      path_to_result: str = "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-step-80-bs-32-beams-1_validate_exebench.json",
+                      validation_dir: str = "/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench"):
     dataset = load_from_disk(
         path_to_dataset
     )
@@ -226,7 +227,7 @@ def validate_exebench(path_to_json: str = "fexebench_train_synth_rich_io_filtere
     path_to_record_row_mapping = match_record_with_row(path_to_record_mapping, path_to_row_mapping)
 
     # Run in parallel
-    args = [value for _, value in path_to_record_row_mapping.items()]
+    args = [value + (validation_dir,) for _, value in path_to_record_row_mapping.items()]
     with Pool(processes=80) as pool:
         results = pool.map(wrapper, args)
     

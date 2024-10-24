@@ -186,7 +186,7 @@ def exebench_evaluate(programs,
                     f.flush()
             except Exception as e:
                 logging.error(e)
-    with open(result_file, "w") as f:
+    with open(result_file+".json", "w") as f:
         json.dump(results, f, indent=4, sort_keys=True, separators=(',', ':'))
 
 
