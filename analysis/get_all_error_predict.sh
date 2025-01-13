@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Define the directory to search in and the output file
-search_dir="/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench2"
-output_file="tmp_all_error_predict_list2.txt"
+search_dir="/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench_split_0/"
+output_file="/home/xiachunwei/Projects/alpaca-lora-decompilation/analysis/tmp_all_error_predict_list0.txt"
 
 # Find all files named "error_predict.error" and save their full paths to the output file
 find "$search_dir" -type f -name "error_predict.error" > "$output_file"

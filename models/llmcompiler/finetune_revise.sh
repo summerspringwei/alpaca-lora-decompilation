@@ -1,0 +1,11 @@
+export CUDA_VISIBLE_DEVICES=2 && python models/llmcompiler/finetune_revise_model.py \
+    --base_model=/home/xiachunwei/Datasets/Models/llm-compiler-7b-ftd \
+    --data_path=/home/xiachunwei/Datasets/revise_exebench/revised_exebench_split_03456 \
+    --output_dir=./lora_revise_exebench_split_03456 \
+    --batch_size=8 \
+    --micro_batch_size=8 \
+    --cutoff_len=8192 \
+    --val_set_size=32 \
+    --wandb_project=test_revise_exebench \
+    --prompt_template_name=llmcompiler \
+    --num_proc=1

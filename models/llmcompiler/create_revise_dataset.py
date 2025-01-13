@@ -32,8 +32,9 @@ def process_file(folder_path: str) -> tuple[str, str, str, str]:
     return {"assembly": assembly, "predict_ir": predict_ir, "error_msg": error_msg, "target_ir": target_ir}
 
 
-def create_from_error_file_list(file_path: str):
-    error_type_dict = analyze_error_type.analyze_error_type(file_path)
+def create_from_error_file_list(file_path_list: list[str]):
+    error_type_dict = analyze_error_type.get_error_from_list_files(file_path_list)
+    # error_type_dict = analyze_error_type.analyze_error_type(file_path)
     # Read the error prediction results
     file_list = error_type_dict["use of undefined value"]
     output = [process_file(os.path.dirname(file)) for file in file_list]
@@ -42,7 +43,13 @@ def create_from_error_file_list(file_path: str):
 
 
 def main():
-    output = create_from_error_file_list("analysis/tmp_all_error_predict_list.txt")
+    output = create_from_error_file_list([
+        "/home/xiachunwei/Projects/alpaca-lora-decompilation/analysis/tmp_all_error_predict_list0.txt", 
+        "/home/xiachunwei/Projects/alpaca-lora-decompilation/analysis/tmp_all_error_predict_list3.txt", 
+        "/home/xiachunwei/Projects/alpaca-lora-decompilation/analysis/tmp_all_error_predict_list4.txt", 
+        "/home/xiachunwei/Projects/alpaca-lora-decompilation/analysis/tmp_all_error_predict_list5.txt", 
+        "/home/xiachunwei/Projects/alpaca-lora-decompilation/analysis/tmp_all_error_predict_list6.txt", 
+    ])
     instruction = "Give the assembly code, predicted IR and the error message, generate the target IR code."
     input_str = "assembly code: <code> {assembly} </code>, predicted IR: <code> {predict_ir} </code>, error message: {error_msg} "
     label = "target IR: {target_ir}"
@@ -57,8 +64,8 @@ def main():
     dataset_dict = DatasetDict({
         'train': Dataset.from_list(instruction_list)
     })
-    dataset_dict.save_to_disk("/home/xiachunwei/Datasets/revise_exebench/revised_exebench_split_0")
-    dataset = load_from_disk("/home/xiachunwei/Datasets/revise_exebench/revised_exebench_split_0")
+    dataset_dict.save_to_disk("/home/xiachunwei/Datasets/revise_exebench/revised_exebench_split_03456")
+    dataset = load_from_disk("/home/xiachunwei/Datasets/revise_exebench/revised_exebench_split_03456")
     print(dataset)
 
 

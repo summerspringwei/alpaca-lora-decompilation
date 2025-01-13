@@ -100,21 +100,7 @@ def get_error_type(error_predict_list: list[str]) -> dict[str, list[str]]:
     return error_type_dict
 
 
-def analyze_error_type(file_path: str)->dict[str, list[str]]:
-    """Read the error prediction results and analyze the error types
-    
-    Parameters:
-        file_path (str): the file path of error prediction results created by get_all_error_predict.sh
-    
-    Returns:
-        dict: a dictionary of error types and corresponding list of file paths
-    """
-    error_predict_list = get_error_predict_list(file_path)
-    error_type_dict = get_error_type(error_predict_list)
-    new_error_dict = post_processing_error_dict(error_type_dict)
-    draw_error_type_pie(new_error_dict)
-    
-    return new_error_dict
+
 
 
 def post_processing_error_dict(error_dict_count: dict[str, list[str]]) -> dict[str, list[str]]:
@@ -172,6 +158,44 @@ def draw_error_type_pie(error_dict_count: dict[str, list[str]], fig_name:str = "
     plt.savefig(fig_path)
 
     return fig_path
+
+
+def analyze_error_type(file_path: str)->dict[str, list[str]]:
+    """Read the error prediction results and analyze the error types
+    
+    Parameters:
+        file_path (str): the file path of error prediction results created by get_all_error_predict.sh
+    
+    Returns:
+        dict: a dictionary of error types and corresponding list of file paths
+    """
+    error_predict_list = get_error_predict_list(file_path)
+    error_type_dict = get_error_type(error_predict_list)
+    new_error_dict = post_processing_error_dict(error_type_dict)
+    
+    
+    return new_error_dict
+
+
+def get_error_from_list_files(file_path_list: list[str])->dict[str, list[str]]:
+    """Get the error types from a list of error prediction result files
+
+    Parameters:
+        file_path_list (list): a list of file paths of error prediction results
+    
+    Returns:
+        dict: a dictionary of error types and corresponding list of file paths
+    """
+    all_error_dict = {}
+    for file_path in file_path_list:
+        error_dict = analyze_error_type(file_path)
+        for error_type, error_file_list in error_dict.items():
+            if error_type in all_error_dict:
+                all_error_dict[error_type].extend(error_file_list)
+            else:
+                all_error_dict[error_type] = error_file_list
+    draw_error_type_pie(all_error_dict)
+    return all_error_dict
 
 
 if __name__ == "__main__":

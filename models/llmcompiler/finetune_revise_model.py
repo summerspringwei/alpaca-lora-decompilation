@@ -5,7 +5,7 @@ from typing import List
 import fire
 import torch
 import transformers
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from utils.prompter import Prompter
 
 from peft import (
@@ -200,7 +200,8 @@ def train(
     if data_path.endswith(".json") or data_path.endswith(".jsonl"):
         data = load_dataset("json", data_files=data_path)
     else:
-        data = load_dataset(data_path)
+        # data = load_dataset(data_path)
+        data = load_from_disk(data_path)
     # data = data['train'].select(0, 2048)
     if lora_checkpoint:
         # Check the available weights and load them
@@ -234,7 +235,6 @@ def train(
         #     print(f"Checkpoint {checkpoint_name} not found")
 
     model.print_trainable_parameters()  # Be more transparent about the % of trainable params.
-    data_start, data_end = 0, 2048
     if data_end > data_start:
         data["train"] = data["train"].select(range(data_start, data_end))
     if val_set_size > 0:
