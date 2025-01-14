@@ -34,8 +34,9 @@ def gemini_predict(dataset_path: str, output_path: str):
                 )
                 parts = [part.text for part in response.candidates[0].content.parts]
                 # We need to extract the LLVM code from the response
-                llvm_code = [extract_llvm_code(part) for part in parts if len(extract_llvm_code(part)) > 0]
-                predict = llvm_code[0][0] if len(llvm_code) > 0 else ""
+                llvm_code = [extract_llvm_code(part) for part in parts]
+                llvm_code = [code[0] for code in llvm_code if len(code) > 0]
+                predict = llvm_code[0] if len(llvm_code) > 0 else ""
                 out = {
                                 "instruction": input_str,
                                 "input": asm_code,

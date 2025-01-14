@@ -181,6 +181,7 @@ def preprocess_records(all_records: list[Dict])->Dict:
         if isinstance(record["predict"], list):
             new_predict_list = []
             for predict in record["predict"]:
+                # For llmcompiler, the output is wrapped in code block
                 if predict.find("code") >= 0:
                     matched_predict_llvm_ir = extract_llmcompiler_code_blocks(predict)
                     if matched_predict_llvm_ir and len(matched_predict_llvm_ir) > 0:
@@ -189,6 +190,8 @@ def preprocess_records(all_records: list[Dict])->Dict:
                         # logging.error(f"Cannot find code block in {predict}")
                         logging.error(f"Cannot find code block in {record['file']}")
                         new_predict_list.append(predict)
+                else:
+                    new_predict_list.append(predict)
                 if predict.find("aarch64") >= 0:
                     logging.error(f"Find aarch64 in {record['file']}")
             record["predict"] = new_predict_list

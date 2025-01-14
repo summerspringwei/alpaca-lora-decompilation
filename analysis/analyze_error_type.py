@@ -100,9 +100,6 @@ def get_error_type(error_predict_list: list[str]) -> dict[str, list[str]]:
     return error_type_dict
 
 
-
-
-
 def post_processing_error_dict(error_dict_count: dict[str, list[str]]) -> dict[str, list[str]]:
     """Post processing the error type dictionary by merging similar error types
 
@@ -172,8 +169,7 @@ def analyze_error_type(file_path: str)->dict[str, list[str]]:
     error_predict_list = get_error_predict_list(file_path)
     error_type_dict = get_error_type(error_predict_list)
     new_error_dict = post_processing_error_dict(error_type_dict)
-    
-    
+    draw_error_type_pie(new_error_dict)
     return new_error_dict
 
 
