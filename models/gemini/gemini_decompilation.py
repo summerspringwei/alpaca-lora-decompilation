@@ -30,7 +30,9 @@ def gemini_predict(dataset_path: str, output_path: str):
                 input_str = "decompile the x86 assembly to llvm ir: \n" + asm_code
 
                 response = client.models.generate_content(
-                    model='gemini-2.0-flash-thinking-exp', contents=input_str
+                    model='gemini-2.0-flash-thinking-exp', contents=input_str, config={
+                        "response_logprobs": True, "response_lengt": 10
+                    }
                 )
                 parts = [part.text for part in response.candidates[0].content.parts]
                 # We need to extract the LLVM code from the response
