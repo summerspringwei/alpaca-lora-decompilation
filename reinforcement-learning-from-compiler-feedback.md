@@ -17,7 +17,15 @@ python3 utils/merge_peft_weights_to_llama.py \
 ```shell
 export CUDA_VISIBLE_DEVICES=3 && python3 models/llmcompiler/llmcompiler_generate.py     --batch_size 32 --num_beams 1     --pretrained_model_path "/home/xiachunwei/Datasets/Models/llm-compiler-13b-ftd"     --dataset_path "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2"     --result_file exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-reward-length-step-20-bs-32-beams-1 --lora_adapter_path /home/xiachunwei/Projects/checkpoints-decompilation/rl-ppo-reward-length-exebench-split1/rl-ppo-reward-lengthstep_20
 
-export CUDA_VISIBLE_DEVICES=3 && python3 models/llmcompiler/llmcompiler_generate.py     --batch_size 32 --num_beams 1     --pretrained_model_path "/home/xiachunwei/Datasets/Models/llm-compiler-13b-ftd"     --dataset_path "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_4_llvm_extract_func_ir_assembly_O2"     --result_file exebench_train_synth_rich_io_filtered_llvm_ir_4_llm-compiler-13b-ftd-rl-ppo-length_reward_pack_similar_length_samples-step-60-bs-32-beams-1 --lora_adapter_path /home/xiachunwei/Projects/checkpoints-decompilation/runs_rl_length_reward_pack_similar_length_samples/step_60
+```
+
+```bash
+export CUDA_VISIBLE_DEVICES=3 && python3 models/llmcompiler/llmcompiler_generate.py \
+    --batch_size 32 --num_beams 1 \
+    --pretrained_model_path "/home/xiachunwei/Datasets/Models/llm-compiler-13b-ftd" \
+    --dataset_path "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_4_llvm_extract_func_ir_assembly_O2"  \
+    --result_file exebench_train_synth_rich_io_filtered_llvm_ir_4_llm-compiler-13b-ftd-rl-ppo-length_reward_pack_similar_length_samples-step-60-bs-32-beams-1 \
+    --lora_adapter_path /home/xiachunwei/Projects/checkpoints-decompilation/runs_rl_length_reward_pack_similar_length_samples/step_60 \
 ```
 
 >> After that, validate the generated results by compiling and runing them:

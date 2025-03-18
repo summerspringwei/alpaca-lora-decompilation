@@ -26,23 +26,25 @@ python3 models/llmcompiler/rl_exebench.py \
 import os
 import pickle
 import json
-from dataclasses import dataclass, field
 from typing import Optional, Dict
+from dataclasses import dataclass, field
 
 import torch
+from tqdm import tqdm
+from peft import LoraConfig
 from accelerate import Accelerator
 from datasets import load_dataset, load_from_disk
-from peft import LoraConfig
-from tqdm import tqdm
 from torch.profiler import profile, record_function, ProfilerActivity
 from transformers import Adafactor, AutoTokenizer, HfArgumentParser, PreTrainedTokenizer, BitsAndBytesConfig
 
-from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer, set_seed
 from trl.core import LengthSampler
+from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer
+from transformers import set_seed
 
 from utils.evaluate_exebench import validate_by_execution
 from utils.extract_code import extract_llmcompiler_code_blocks
 from models.llmcompiler.processing import build_dataset, pack_similar_length_samples
+from models.llmcompiler.reward_functions import get_reward_length, get_reward_discrete
 
 tqdm.pandas()
 
@@ -128,7 +130,6 @@ class ScriptArguments:
             "Initial KL penalty coefficient (used for adaptive and linear control)"
         },
     )
-
     adap_kl_ctrl: Optional[bool] = field(
         default=True,
         metadata={"help": "Use adaptive KL control, otherwise linear"})
@@ -136,239 +137,200 @@ class ScriptArguments:
         default=True, metadata={"help": "whether to load the model in 8bit"})
 
 
-parser = HfArgumentParser(ScriptArguments)
-script_args: ScriptArguments = parser.parse_args_into_dataclasses()[0]
-reward_model_name = script_args.reward_model_name
 
-config = PPOConfig(
-    steps=script_args.steps,
-    model_name=script_args.model_name,
-    learning_rate=script_args.learning_rate,
-    log_with=script_args.log_with,
-    batch_size=script_args.batch_size,
-    mini_batch_size=script_args.mini_batch_size,
-    gradient_accumulation_steps=script_args.gradient_accumulation_steps,
-    optimize_cuda_cache=True,
-    early_stopping=script_args.early_stopping,
-    target_kl=script_args.target_kl,
-    ppo_epochs=script_args.ppo_epochs,
-    seed=script_args.seed,
-    init_kl_coef=script_args.init_kl_coef,
-    adap_kl_ctrl=script_args.adap_kl_ctrl,
-    remove_unused_columns=
-    False,  # We need to keep the original columns for the reward model
-)
-
-# path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_1_llvm_extract_func_ir_assembly_O2"
-path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_1_llvm_extract_func_ir_assembly_O2_llvm_diff"
 # path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_1_llvm_extract_func_ir_assembly_O2_llvm_diff_input_len_500"
+# path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_1_llvm_extract_func_ir_assembly_O2"
+def main(
+    path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_1_llvm_extract_func_ir_assembly_O2_llvm_diff",
+    validation_dir = "validation/tmp_rl_validation",
+    select_num_samples: int| None = None
+    ):
+    parser = HfArgumentParser(ScriptArguments)
+    script_args: ScriptArguments = parser.parse_args_into_dataclasses()[0]
 
-train_dataset = dataset = load_from_disk(path_to_dataset)
-# train_dataset = train_dataset.select(range(1000))
-original_columns = train_dataset.column_names
-
-# We then define the arguments to pass to the sentiment analysis pipeline.
-# We set `return_all_scores` to True to get the sentiment score for each token.
-sent_kwargs = {
-    "return_all_scores": True,
-    "function_to_apply": "none",
-    "batch_size": 8,
-    "truncation": True,
-}
-
-tokenizer = AutoTokenizer.from_pretrained(script_args.tokenizer_name)
-# GPT-2 tokenizer has a pad token, but it is not eos_token by default. We need to set it to eos_token.
-# only for this model.
-
-if getattr(tokenizer, "pad_token", None) is None:
-    tokenizer.pad_token = tokenizer.eos_token
-
-
-# We retrieve the dataloader by calling the `build_dataset` function.
-dataset = build_dataset(tokenizer, train_dataset, script_args.input_max_length)
-dataset = pack_similar_length_samples(dataset, script_args.batch_size, num_chunks=8)
-
-def collator(data):
-    return {key: [d[key] for d in data] for key in data[0]}
-
-# set seed before initializing value head for deterministic eval
-set_seed(config.seed)
-
-# Now let's build the model, the reference model, and the tokenizer.
-current_device = Accelerator().local_process_index
-
-lora_config = LoraConfig(
-    r=16,
-    lora_alpha=32,
-    lora_dropout=0.05,
-    bias="none",
-    task_type="CAUSAL_LM",
-)
-
-quantization_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_compute_dtype=torch.float16,
-    bnb_4bit_quant_type="nf4"
-)
-
-model = AutoModelForCausalLMWithValueHead.from_pretrained(
-    config.model_name,
-    device_map={"": current_device},
-    load_in_8bit=script_args.load_in_8bit,
-    # bnb_4bit_compute_dtype=torch.float16,
-    # quantization_config=quantization_config,
-    peft_config=lora_config,
-)
-
-optimizer = None
-if script_args.adafactor:
-    optimizer = Adafactor(
-        filter(lambda p: p.requires_grad, model.parameters()),
-        scale_parameter=False,
-        relative_step=False,
-        warmup_init=False,
-        lr=config.learning_rate,
-    )
-# We then build the PPOTrainer, passing the model, the reference model, the tokenizer
-ppo_trainer = PPOTrainer(
-    config,
-    model,
-    ref_model=None,
-    tokenizer=tokenizer,
-    dataset=dataset,
-    data_collator=collator,
-    optimizer=optimizer,
-)
-
-# We then build the sentiment analysis pipeline using our reward model, passing the
-# model name and the sentiment analysis pipeline arguments. Let's also make sure to
-# set the device to the same device as the PPOTrainer.
-device = ppo_trainer.accelerator.device
-if ppo_trainer.accelerator.num_processes == 1:
-    device = 0 if torch.cuda.is_available(
-    ) else "cpu"  # to avoid a ` pipeline` bug
-
-# We then define the arguments to pass to the `generate` function. These arguments
-# are passed to the `generate` function of the PPOTrainer, which is a wrapper around
-# the `generate` function of the trained model.
-generation_kwargs = {
-    # "min_length": -1,
-    "top_k": 16,
-    "temperature": 0.1,
-    "top_p": 0.95,
-    "do_sample": True,
-    "pad_token_id": tokenizer.pad_token_id,
-    "eos_token_id": 2,  # tokenizer.eos_token_id only valid for llama2
-    "max_new_tokens": script_args.output_max_length,
-    "batch_size": script_args.batch_size,
-    "cache_implementation": "offloaded",
-}
-# output_min_length = 32
-# output_max_length = script_args.output_max_length
-output_length_sampler = None
-# output_length_sampler = LengthSampler(output_min_length, output_max_length)
-
-result_file = f"ppo-llm-compiler-bs-{script_args.batch_size}-mbs-{script_args.mini_batch_size}.json"
-f_generate = open(result_file + "_inc", "a")
-
-
-def get_reward_discrete(output: Dict) -> float:
-    reward = -1
-    if not output["target_execution_success"]:
-        reward = 0
-    elif isinstance(output["predict_execution_success"], list) and any(
-            output["predict_execution_success"]):
-        reward = 1
-    elif isinstance(output["predict_compile_success"], list) and any(
-            output["predict_compile_success"]):
-        reward = -0.1
-    else:
-        reward = -1
-
-    return reward
-
-
-def get_reward_length(output: Dict, tokenizer: PreTrainedTokenizer) -> float:
-    # length = 
-    tokenized_question = tokenizer(output["output"], truncation=True)
-    length = len(tokenized_question["input_ids"])
-    reward = -1
-    if not output["target_execution_success"]:
-        reward = 0
-    elif isinstance(output["predict_execution_success"], list) and any(
-            output["predict_execution_success"]):
-        reward = 1
-    elif isinstance(output["predict_compile_success"], list) and any(
-            output["predict_compile_success"]):
-        reward = -0.1
-    else:
-        reward = -1
-    reward = torch.tanh(torch.tensor(reward * length / script_args.input_max_length, dtype=torch.float32))
-    return reward
-
-
-for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
-    print("input_shape")
-    for b in batch["input_ids"]:
-        print(b.shape)
-    if epoch >= config.total_ppo_epochs:
-        break
-    question_tensors = batch["input_ids"]
-
-    response_tensors = ppo_trainer.generate(
-        question_tensors,
-        return_prompt=False,
-        length_sampler=output_length_sampler,
-        **generation_kwargs,
+    config = PPOConfig(
+        steps=script_args.steps,
+        model_name=script_args.model_name,
+        learning_rate=script_args.learning_rate,
+        log_with=script_args.log_with,
+        batch_size=script_args.batch_size,
+        mini_batch_size=script_args.mini_batch_size,
+        gradient_accumulation_steps=script_args.gradient_accumulation_steps,
+        optimize_cuda_cache=True,
+        early_stopping=script_args.early_stopping,
+        target_kl=script_args.target_kl,
+        ppo_epochs=script_args.ppo_epochs,
+        seed=script_args.seed,
+        init_kl_coef=script_args.init_kl_coef,
+        adap_kl_ctrl=script_args.adap_kl_ctrl,
+        remove_unused_columns=
+        False,  # We need to keep the original columns for the reward model
     )
 
-    batch["response"] = tokenizer.batch_decode(response_tensors,
-                                               skip_special_tokens=True)
+    train_dataset = dataset = load_from_disk(path_to_dataset)
+    train_dataset = train_dataset.select(range(select_num_samples)) if select_num_samples else train_dataset
 
-    # Create dummy response for debugging
-    # batch["response"] = ["a" for _ in batch["query"]]
-    dump_generation_results(batch, f_generate)
-    # For debug only, we dump the intermedia results, so that we can avoid the time consuming generating process
-    # pickle.dump(question_tensors, open("question_tensors.pkl", 'wb'))
-    # pickle.dump(response_tensors, open("response_tensors.pkl", 'wb'))
-    # pickle.dump(batch, open("texts.pkl", 'wb'))
-    # batch = pickle.load(open("texts.pkl", 'rb'))
-    # response_tensors = pickle.load(open("response_tensors.pkl", 'rb'))
-    # question_tensors = pickle.load(open("question_tensors.pkl", 'rb'))
+    # We then define the arguments to pass to the sentiment analysis pipeline.
+    # We set `return_all_scores` to True to get the sentiment score for each token.
+    sent_kwargs = {
+        "return_all_scores": True,
+        "function_to_apply": "none",
+        "batch_size": 8,
+        "truncation": True,
+    }
 
-    texts = [q + r for q, r in zip(batch["query"], batch["response"])]
+    tokenizer = AutoTokenizer.from_pretrained(script_args.tokenizer_name)
+    # GPT-2 tokenizer has a pad token, but it is not eos_token by default. We need to set it to eos_token.
+    # only for this model.
+    if getattr(tokenizer, "pad_token", None) is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
-    # Compute reward score (using the sentiment analysis pipeline)
-    # Get the reward from compiler and execution
-    predict_results = [{key: value[idx]
-                        for key, value in batch.items()}
-                       for idx in range(len(batch['path']))]
+    # We retrieve the dataloader by calling the `build_dataset` function.
+    dataset = build_dataset(tokenizer, train_dataset, script_args.input_max_length)
+    dataset = pack_similar_length_samples(dataset, script_args.batch_size, num_chunks=8)
 
-    records = [{
-        'predict':
-        extract_llmcompiler_code_blocks(row['response']) if isinstance(
-            row['response'], str) else
-        [extract_llmcompiler_code_blocks(r) for r in row['response']],
-        'file':
-        row['path'],
-        'output':
-        row['llvm_ir']['code'][-1]
-    } for row in predict_results]
-    validation_results = [
-        validate_by_execution(record, row)
-        for row, record in zip(predict_results, records)
-    ]
+    def collator(data):
+        return {key: [d[key] for d in data] for key in data[0]}
 
-    # Compute rewards
-    rewards = [
-        torch.tensor(get_reward_length(output, tokenizer), dtype=torch.float32)
-        for output in validation_results
-    ]
-    print("Rewards: ", rewards)
-    
-    # Run PPO step
-    stats = ppo_trainer.step(question_tensors, response_tensors, rewards)
-    ppo_trainer.log_stats(stats, batch, rewards)
+    # set seed before initializing value head for deterministic eval
+    set_seed(config.seed)
 
-    if script_args.save_freq and epoch and epoch % script_args.save_freq == 0:
-        ppo_trainer.save_pretrained(os.path.join(script_args.output_dir, f"step_{epoch}"))
+    # Now let's build the model, the reference model, and the tokenizer.
+    current_device = Accelerator().local_process_index
+
+    lora_config = LoraConfig(
+        r=16,
+        lora_alpha=32,
+        lora_dropout=0.05,
+        bias="none",
+        task_type="CAUSAL_LM",
+    )
+
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_quant_type="nf4"
+    )
+
+    model = AutoModelForCausalLMWithValueHead.from_pretrained(
+        config.model_name,
+        device_map={"": current_device},
+        load_in_8bit=script_args.load_in_8bit,
+        # bnb_4bit_compute_dtype=torch.float16,
+        # quantization_config=quantization_config,
+        peft_config=lora_config,
+    )
+
+    optimizer = None
+    if script_args.adafactor:
+        optimizer = Adafactor(
+            filter(lambda p: p.requires_grad, model.parameters()),
+            scale_parameter=False,
+            relative_step=False,
+            warmup_init=False,
+            lr=config.learning_rate,
+        )
+    # We then build the PPOTrainer, passing the model, the reference model, the tokenizer
+    ppo_trainer = PPOTrainer(
+        config,
+        model,
+        ref_model=None,
+        tokenizer=tokenizer,
+        dataset=dataset,
+        data_collator=collator,
+        optimizer=optimizer,
+    )
+
+    # We then build the sentiment analysis pipeline using our reward model, passing the
+    # model name and the sentiment analysis pipeline arguments. Let's also make sure to
+    # set the device to the same device as the PPOTrainer.
+    device = ppo_trainer.accelerator.device
+    if ppo_trainer.accelerator.num_processes == 1:
+        device = 0 if torch.cuda.is_available(
+        ) else "cpu"  # to avoid a ` pipeline` bug
+
+    # We then define the arguments to pass to the `generate` function. These arguments
+    # are passed to the `generate` function of the PPOTrainer, which is a wrapper around
+    # the `generate` function of the trained model.
+    generation_kwargs = {
+        # "min_length": -1,
+        "top_k": 16,
+        "temperature": 0.1,
+        "top_p": 0.95,
+        "do_sample": True,
+        "pad_token_id": tokenizer.pad_token_id,
+        "eos_token_id": 2,  # tokenizer.eos_token_id only valid for llama2
+        "max_new_tokens": script_args.output_max_length,
+        "batch_size": script_args.batch_size,
+        "cache_implementation": "static",
+    }
+    # output_min_length = 32
+    # output_max_length = script_args.output_max_length
+    output_length_sampler = None
+    # output_length_sampler = LengthSampler(output_min_length, output_max_length)
+
+    result_file = f"ppo-llm-compiler-bs-{script_args.batch_size}-mbs-{script_args.mini_batch_size}.json"
+    f_generate = open(result_file + "_inc", "a")
+
+    for epoch, batch in tqdm(enumerate(ppo_trainer.dataloader)):
+        print("input_shape")
+        for b in batch["input_ids"]:
+            print(b.shape)
+        if epoch >= config.total_ppo_epochs:
+            break
+        question_tensors = batch["input_ids"]
+
+        response_tensors = ppo_trainer.generate(
+            question_tensors,
+            return_prompt=False,
+            length_sampler=output_length_sampler,
+            **generation_kwargs,
+        )
+
+        batch["response"] = tokenizer.batch_decode(response_tensors,
+                                                skip_special_tokens=True)
+
+        # Create dummy response for debugging
+        # batch["response"] = ["a" for _ in batch["query"]]
+        dump_generation_results(batch, f_generate)
+        
+        texts = [q + r for q, r in zip(batch["query"], batch["response"])]
+
+        # Compute reward score (using the sentiment analysis pipeline)
+        # Get the reward from compiler and execution
+        predict_results = [{key: value[idx]
+                            for key, value in batch.items()}
+                        for idx in range(len(batch['path']))]
+
+        records = [{
+            'predict':
+            extract_llmcompiler_code_blocks(row['response']) if isinstance(
+                row['response'], str) else
+            [extract_llmcompiler_code_blocks(r) for r in row['response']],
+            'file':
+            row['path'],
+            'output':
+            row['llvm_ir']['code'][-1]
+        } for row in predict_results]
+        validation_results = [
+            validate_by_execution(record, row, validation_dir)
+            for row, record in zip(predict_results, records)
+        ]
+
+        # Compute rewards
+        rewards = [
+            torch.tensor(get_reward_discrete(output), dtype=torch.float16)
+            for output in validation_results
+        ]
+        print("Rewards: ", rewards)
+        
+        # Run PPO step
+        stats = ppo_trainer.step(question_tensors, response_tensors, rewards)
+        ppo_trainer.log_stats(stats, batch, rewards)
+
+        if script_args.save_freq and epoch and epoch % script_args.save_freq == 0:
+            ppo_trainer.save_pretrained(os.path.join(script_args.output_dir, f"step_{epoch}"))
+
+
+if __name__ == "__main__":
+    main()

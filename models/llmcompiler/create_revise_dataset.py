@@ -50,7 +50,7 @@ def main():
         "/home/xiachunwei/Projects/alpaca-lora-decompilation/analysis/tmp_all_error_predict_list5.txt", 
         "/home/xiachunwei/Projects/alpaca-lora-decompilation/analysis/tmp_all_error_predict_list6.txt", 
     ])
-    instruction = "Give the assembly code, predicted IR and the error message, generate the target IR code."
+    instruction = "Give the assembly code, predicted IR and the error message, generate the correct target IR code."
     input_str = "assembly code: <code> {assembly} </code>, predicted IR: <code> {predict_ir} </code>, error message: {error_msg} "
     label = "target IR: {target_ir}"
     instruction_list = [{

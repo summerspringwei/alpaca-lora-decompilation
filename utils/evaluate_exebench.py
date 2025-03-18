@@ -110,13 +110,21 @@ def eval_assembly(row: Dict, assembly: str) -> bool:
         return success
 
 
-def validate_by_execution(record: Dict, row: Dict, validation_dir:str)->Dict:
-    # 1. First validate the target assembly
+def has_aarch64_target(llvm_ir: str):
+    """Check if the LLVM IR has aarch64 target.
+    
+    """
+    return llvm_ir.find('target triple = "aarch64') != -1
+
+
+def validate_by_execution(record: Dict, row: Dict, validation_dir:str, target="x86")->Dict:
+    # 1. First validate the target llvm IR
     file_path = record['file']
     full_path = os.path.join(validation_dir, file_path, row['fname'])
     pathlib.Path(full_path).mkdir(parents=True, exist_ok=True)
     if isinstance(record["output"], list):
         record["output"] = record["output"][0]
+    
     target_success, target_assembly_path = compile_target_ir(record["output"], full_path)
     target_execution_success = False
     # Validate the target assembly
@@ -135,6 +143,12 @@ def validate_by_execution(record: Dict, row: Dict, validation_dir:str)->Dict:
         record["predict_compile_success"] = []
         record["predict_execution_success"] = []
         for predict in record["predict"]:
+            # 2.1 Check the llvm ir target
+            if target=='x86' and has_aarch64_target(predict):
+                record["predict_compile_success"].append(False)
+                record["predict_execution_success"].append(False)
+                continue
+            # 2.2 Compiler the llvm ir to assembly
             predict_success, predict_assembly_path = compile_predicted_record(predict, full_path)
             predict_execution_success = False
             # Validate the predict assembly

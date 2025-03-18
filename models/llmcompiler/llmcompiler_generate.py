@@ -124,7 +124,8 @@ def vllm_evaluate_batch(
                                          max_tokens=4096,
                                          min_tokens=32,
                                          use_beam_search=True)
-    sequences = llm.generate(prompt_list, sampling_params, lora_request=LoRARequest("lora", 1, lora_adapter_path))
+    lora_request = LoRARequest("lora", 1, lora_adapter_path) if lora_adapter_path else None
+    sequences = llm.generate(prompt_list, sampling_params, lora_request=lora_request)
     if num_beams == 1:
         results = [seq.outputs[0].text for seq in sequences]
     else:

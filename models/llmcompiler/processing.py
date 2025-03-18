@@ -66,7 +66,7 @@ def build_dataset(
     return ds
 
 
-def pack_similar_length_samples(dataset, batch_size: int, num_chunks: int):
+def pack_similar_length_samples(dataset, batch_size: int, num_chunks: int, sort_key_function=lambda x: len(x["input_ids"])):
     """
     Pack similar length samples into the same batch. This is to reduce the padding size.
 
@@ -86,9 +86,8 @@ def pack_similar_length_samples(dataset, batch_size: int, num_chunks: int):
     """
     if len(dataset) <= batch_size * num_chunks * 2:
         return dataset
-    sorted_dataset = sorted(dataset, key=lambda x: len(x["input_ids"]))
-    batched_dataset = [sorted_dataset[i: i + batch_size] for i in range(0, len(sorted_dataset), batch_size)]
-    # shape: (num_chunks, batch_size)
+    sorted_dataset = sorted(dataset, key=sort_key_function)
+    batched_dataset = [sorted_dataset[i: i + batch_size] for i in range(0, len(sorted_dataset), batch_size)] # Shape: (num_batches, batch_size)
     # Split to num_chunks
     chunks_size = len(batched_dataset) // num_chunks
     chunks_chunks = [batched_dataset[i: i+chunks_size] for i in range(0, len(batched_dataset), chunks_size)]
