@@ -191,11 +191,14 @@ def exebench_evaluate(programs,
         json.dump(results, f, indent=4, sort_keys=True, separators=(',', ':'))
 
 
-def exebench_main(batch_size=1, num_beams = 8, 
-                  pretrained_model_path = "/home/xiachunwei/Datasets/Models/llm-compiler-13b-ftd",
-                  dataset_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2",
-                  result_file = f"exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-beams-8",
-                  lora_adapter_path = None
+def exebench_main(batch_size=8, 
+                  num_beams = 8, 
+                  pretrained_model_path = "/home/xiachunwei/Datasets/Models/llm-compiler-7b-ftd",
+                  dataset_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff_sample_100",
+                  result_file = f"exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-7b-ftd-beams-8",
+                  lora_adapter_path = "llmcompiler-7b-GRPO-execution/checkpoint-100/",
+                #   framework="vllm" # or "transformers"
+                framework="transformers"
     ):
     
     # model, tokenizer = get_llmcompiler_model(pretrained_model_path)
@@ -203,21 +206,30 @@ def exebench_main(batch_size=1, num_beams = 8,
     prompter = Prompter("llmcompiler")
     # Sort the programs by length
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path)
-    
+    tokenizer.pad_token = tokenizer.eos_token
     programs = load_from_disk(dataset_path)
     # programs = programs.select(range(64))
 
     def get_length(p):
         p['asm_len'] = len(tokenizer(p["asm"]["code"][-1])['input_ids'])
         return p
-    programs = programs.map(get_length, num_proc=40)
-    programs = programs.sort("asm_len")
+    # programs = programs.map(get_length, num_proc=40)
+    # programs = programs.sort("asm_len")
 
     enable_lora=True if lora_adapter_path is not None else False
-    if batch_size > 1:
-        llm = LLM(model=pretrained_model_path, max_num_seqs=batch_size, enable_lora=enable_lora)
+    if framework == "vllm":
+        if batch_size > 1:
+            llm = LLM(model=pretrained_model_path, max_num_seqs=batch_size, enable_lora=enable_lora)
+        else:
+            llm = LLM(model=pretrained_model_path, enable_lora=enable_lora)
     else:
-        llm = LLM(model=pretrained_model_path, enable_lora=enable_lora)
+        model = AutoModelForCausalLM.from_pretrained(pretrained_model_path)
+        if lora_adapter_path:
+            model.load_adapter(lora_adapter_path)
+        model.half().to(device)
+        model.eval()
+        llm = None
+
     exebench_evaluate(
         programs,
         prompter,
