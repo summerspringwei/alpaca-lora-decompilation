@@ -12,7 +12,7 @@ from utils.evaluate_exebench import validate_by_execution
 from models.llmcompiler.processing import pack_similar_length_samples
 from utils.preprocessing_assembly import preprocessing_assembly
 
-def build_dataset(path_to_dataset, tokenizer, max_input_length=512, batch_size=8, num_chunks=2):
+def build_dataset(path_to_dataset, tokenizer, max_input_length=368, batch_size=8, num_chunks=2):
     exebench_dataset = load_from_disk(path_to_dataset)
     
     def copy_asm_to_prompt(example):
@@ -22,19 +22,27 @@ def build_dataset(path_to_dataset, tokenizer, max_input_length=512, batch_size=8
 
     formatted_dataset = exebench_dataset.map(copy_asm_to_prompt)
     formatted_dataset = formatted_dataset.filter(lambda x: len(tokenizer(x['prompt'])["input_ids"]) < max_input_length)
-    # exebench_dataset = pack_similar_length_samples(formatted_dataset, batch_size, num_chunks, sort_key_function=lambda x: len(tokenizer(x['prompt'])["input_ids"]))
+    exebench_dataset = pack_similar_length_samples(formatted_dataset, batch_size, num_chunks, sort_key_function=lambda x: len(tokenizer(x['prompt'])["input_ids"]))
 
     return formatted_dataset
+
+
+def has_aarch64_target(llvm_ir: str):
+    """Check if the LLVM IR has aarch64 target.
+    
+    """
+    return llvm_ir.find("aarch64-none-linux-gnu") != -1
 
 
 def main(
         path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff_sample_100",
         model_path = "/home/xiachunwei/Datasets/Models/llm-compiler-7b-ftd",
-        max_completion_length=4096,
-        num_generations=8,
+        max_completion_length=1024,
+        num_generations=4,
         save_steps=50,
         batch_size=8,
-        validation_dir = "validation/tmp_rl_validation"):
+        validation_dir = "validation/tmp_rl_validation",
+        ):
 
     tokenizer = LlamaTokenizer.from_pretrained(
         model_path, add_eos_token=True
@@ -44,18 +52,22 @@ def main(
 
     exebench_dataset = build_dataset(path_to_dataset, tokenizer)
 
-    for record in exebench_dataset:
-        print(len(tokenizer(record['prompt'])["input_ids"]))
+    # for record in exebench_dataset:
+    #     print(len(tokenizer(record['prompt'])["input_ids"]))
 
-    training_args = GRPOConfig(output_dir="llmcompiler-7b-GRPO", 
+    training_args = GRPOConfig(output_dir="llmcompiler-7b-GRPO-execution-single-gpu", 
                                 logging_steps=1,
                                 max_completion_length=max_completion_length,
                                 num_generations=num_generations,
-                                save_steps=save_steps
+                                save_steps=save_steps,
+                                log_completions=True,
+                                
                                 )
 
     training_args.set_training(batch_size=batch_size, 
                             num_epochs=1, 
+                            learning_rate = 5e-7,
+                            gradient_accumulation_steps=4,
                             # max_steps=1, 
                             gradient_checkpointing=True)
 
@@ -68,7 +80,7 @@ def main(
     )
 
 
-    def reward_compilation(completions, **kwargs):
+    def reward_func_common(completions, **kwargs):
         # Convert kwargs to a list to dict to match the batch size
         original_input = [{} for _ in range(len(completions))]
         predict_list_length = []
@@ -88,6 +100,8 @@ def main(
                 'output': row["llvm_ir"]["code"][-1]
             }
             record = validate_by_execution(record, row, validation_dir)
+            if has_aarch64_target(predict_ir):
+                record["predict_compile_success"] = [False]
             validation_list.append(record)
             predict_list_length.append(len(tokenizer(predict_ir)["input_ids"]))
         predict_reward = [1 if r["predict_compile_success"][0] is True else 0 for r in validation_list]
@@ -96,16 +110,24 @@ def main(
             "results": 
                 wandb.Table(columns=["compile", "executable"], data = [[p, e] for p, e in zip(predict_reward, executable_reward)])
         })
-        return predict_reward
+        ret = {"predict_reward": predict_reward, "executable_reward": executable_reward}
+        return ret
+
+    def reward_compile(completions, **kwargs):
+        return reward_func_common(completions, **kwargs)["predict_reward"]
+
+    def reward_execution(completions, **kwargs):
+        return reward_func_common(completions, **kwargs)["executable_reward"]
 
 
     trainer = GRPOTrainer(
         model=model_path,
         processing_class=tokenizer,
-        reward_funcs=reward_compilation,
+        reward_funcs=reward_execution,
         args=training_args,
         train_dataset=exebench_dataset,
         peft_config = lora_config,
+        
     )
 
     # torch.cuda.memory._record_memory_history()

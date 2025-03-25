@@ -8,7 +8,6 @@ export CUDA_VISIBLE_DEVICES=2 && python3 models/llmcompiler/llmcompiler_generate
     --dataset_path "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2" \
     --result_file "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-step-40-bs-32-beams-1" \
     --lora_adapter_path ""
-
 """
 import json
 import logging
