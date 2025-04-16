@@ -5,73 +5,67 @@ import subprocess
 import logging
 import pathlib
 import shutil
-from typing import Dict
-from multiprocessing import Pool
-
 import tqdm
 import fire
+from typing import Dict
+from multiprocessing import Pool
+from functools import partial
 from datasets import load_from_disk
-from exebench import Wrapper, diff_io, exebench_dict_to_dict, LLVMAssembler
 
+from exebench import Wrapper, diff_io, exebench_dict_to_dict, LLVMAssembler
 from utils.extract_code import extract_llmcompiler_code_blocks
 
 logging.basicConfig(format='%(asctime)s - %(filename)s:%(lineno)s - %(message)s ', level=logging.INFO)
 
-# validation_dir = "/home/xiachunwei/Projects/alpaca-lora-decompilation/tmp_validate_exebench"
 
-def compile_target_ir(target_llvm_ir: str, full_path: str)->bool:
-    target_llvm_ir_path = os.path.join(full_path, "target.ll")
-    target_assembly_path = os.path.join(full_path, "target.s")
-    predict_error_path = os.path.join(full_path, "error_predict.error")
-    with open(target_llvm_ir_path, 'w') as f:
-        f.write(target_llvm_ir[0] if isinstance(target_llvm_ir, list) else target_llvm_ir)
-    target_success = False
+def compile_llvm_ir(llvm_ir: str, compile_dir: str, name_hint)->tuple[bool, str]:
+    """Compile the llvm_ir to assembly and save the results to the validation directory, return true if success compile
+    Args:
+        llvm_ir: str, the llvm ir code.
+        compile_dir: str, the directory to save the compiled assembly code.
+        name_hint: str, the hint for the name of the compiled file.
+    
+    Returns:
+        success: bool, true if the compilation is successful.
+        assembly_path: str, the path of the compiled assembly code.
+    """
+    llvm_ir_path = os.path.join(compile_dir, f"{name_hint}.ll")
+    assembly_path = os.path.join(compile_dir, f"{name_hint}.s")
+    error_path = os.path.join(compile_dir, f"{name_hint}.error")
+    with open(llvm_ir_path, 'w') as f:
+        f.write(llvm_ir[0] if isinstance(llvm_ir, list) else llvm_ir)
+    success = False
     try:
-        # 3. Compile the ground truth llvm ir to assembly
-        cmd = ["llc", target_llvm_ir_path, "-o", target_assembly_path]
+        # 3. Compile the llvm ir to assembly
+        cmd = ["llc", llvm_ir_path, "-o", assembly_path]
         ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if ret.returncode == 0:
-            target_success = True
+            success = True
         else:
             # Save the stderr output to the specified file
-            with open(predict_error_path, 'a') as f:
+            with open(error_path, 'a') as f:
                 f.write(ret.stderr.decode())
-            target_success = False
+            success = False
     except Exception as e:
         logging.error(e)
-        target_success = False
-    return target_success, target_assembly_path
+        success = False
+    return success, assembly_path
 
 
-def compile_predicted_record(
-        predict_llvm_ir: str,
-        full_path: str)->bool:
-    """Compile the llvm ir to assembly and save the results to the validation directory, return true if success compile"""
-    # 1. First save LLVM IR and assembly to file
-    predict_llvm_ir_path = os.path.join(full_path, "predict.ll")
-    predict_assembly_path = os.path.join(full_path, "predict.s")
-    predict_error_path = os.path.join(full_path, "error_predict.error")
-
-    with open(predict_llvm_ir_path, 'w') as f:
-        f.write(predict_llvm_ir)
-    predict_success = True
-    try:
-        # 2. Compile predicted llvm ir to assembly
-        cmd = ["llc", predict_llvm_ir_path, "-o", predict_assembly_path]
-        ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if ret.returncode != 0:
-            # Save the stderr output to the specified file
-            with open(predict_error_path, 'w') as f:
-                f.write(ret.stderr.decode())
-            predict_success = False
-    except Exception as e:
-        logging.error(e)
-        predict_success = False
-    
-    return predict_success, predict_assembly_path
+compile_target_ir = partial(compile_llvm_ir, name_hint="target")
+compile_predicted_ir = partial(compile_llvm_ir, name_hint="predict")
 
 
 def eval_assembly(row: Dict, assembly: str) -> bool:
+    """Evaluate the assembly code by running the synthetic test cases.
+    
+    Args:
+        row: Dict, the row of the dataset in exebench.
+        assembly: str, the assembly code to be evaluated.
+    
+    Returns:
+        success: bool, true if the evaluation is successful.
+    """
     success = True
     synth_wrapper = None
     try:
@@ -103,8 +97,7 @@ def eval_assembly(row: Dict, assembly: str) -> bool:
                 f"Error for {row['path']} total cases {total}, success cases {count}"
             )
     except Exception as e:
-        logging.error(f"Error for {row['path']}")
-        logging.error(e)
+        logging.error(f"Error for {row['path']} with error_msg: {e}")
         success = False
     finally:
         return success
@@ -149,7 +142,7 @@ def validate_by_execution(record: Dict, row: Dict, validation_dir:str, target="x
                 record["predict_execution_success"].append(False)
                 continue
             # 2.2 Compiler the llvm ir to assembly
-            predict_success, predict_assembly_path = compile_predicted_record(predict, full_path)
+            predict_success, predict_assembly_path = compile_predicted_ir(predict, full_path)
             predict_execution_success = False
             # Validate the predict assembly
             if predict_success:
