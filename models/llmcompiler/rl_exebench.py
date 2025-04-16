@@ -31,7 +31,8 @@ from dataclasses import dataclass, field
 
 import torch
 from tqdm import tqdm
-from peft import LoraConfig
+from safetensors import safe_open
+from peft import LoraConfig, PeftModel
 from accelerate import Accelerator
 from datasets import load_dataset, load_from_disk
 from torch.profiler import profile, record_function, ProfilerActivity
@@ -47,6 +48,25 @@ from models.llmcompiler.processing import build_dataset, pack_similar_length_sam
 from models.llmcompiler.reward_functions import get_reward_length, get_reward_discrete
 
 tqdm.pandas()
+
+# Load adapter weights from safetensors
+def init_model_with_lora_weights(model, lora_trained):
+    adapter_weights = {}
+    def rename_keys(key: str)-> str:
+        key = "pretrained_model." + key
+        if key.find("lora_A.weight") != -1:
+            key = key.replace("lora_A.weight", "lora_A.default.weight")
+        elif key.find("lora_B.weight") != -1:
+            key = key.replace("lora_B.weight", "lora_B.default.weight")
+        return key
+        
+    with safe_open(f"{lora_trained}/adapter_model.safetensors", framework="pt") as f:
+        for key in f.keys():
+            adapter_weights[rename_keys(key)] = f.get_tensor(key)
+
+    missing_keys, unexpected_keys = model.load_state_dict(adapter_weights, strict=False)
+    print(f"Unexpected keys: {unexpected_keys}")
+
 
 def dump_generation_results(batch, f_generate):
     for path, query, response, ir, func_head_types in zip(
@@ -135,7 +155,9 @@ class ScriptArguments:
         metadata={"help": "Use adaptive KL control, otherwise linear"})
     load_in_8bit: Optional[bool] = field(
         default=True, metadata={"help": "whether to load the model in 8bit"})
-
+    pretrained_lora_adapter_path: str = field(
+        default=None,
+        metadata={"help": "Use adaptive KL control, otherwise linear"})
 
 
 # path_to_dataset = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_1_llvm_extract_func_ir_assembly_O2_llvm_diff_input_len_500"
@@ -163,8 +185,8 @@ def main(
         seed=script_args.seed,
         init_kl_coef=script_args.init_kl_coef,
         adap_kl_ctrl=script_args.adap_kl_ctrl,
-        remove_unused_columns=
-        False,  # We need to keep the original columns for the reward model
+        remove_unused_columns=False,  # We need to keep the original columns for the reward model
+        gradient_checkpointing=True,
     )
 
     train_dataset = dataset = load_from_disk(path_to_dataset)
@@ -199,11 +221,12 @@ def main(
     current_device = Accelerator().local_process_index
 
     lora_config = LoraConfig(
-        r=16,
+        r=32,
         lora_alpha=32,
         lora_dropout=0.05,
         bias="none",
         task_type="CAUSAL_LM",
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
     )
 
     quantization_config = BitsAndBytesConfig(
@@ -215,11 +238,14 @@ def main(
     model = AutoModelForCausalLMWithValueHead.from_pretrained(
         config.model_name,
         device_map={"": current_device},
-        load_in_8bit=script_args.load_in_8bit,
+        # load_in_8bit=script_args.load_in_8bit,
         # bnb_4bit_compute_dtype=torch.float16,
         # quantization_config=quantization_config,
         peft_config=lora_config,
     )
+    if script_args.pretrained_lora_adapter_path:
+        init_model_with_lora_weights(model, script_args.pretrained_lora_adapter_path)
+
 
     optimizer = None
     if script_args.adafactor:
@@ -262,7 +288,7 @@ def main(
         "eos_token_id": 2,  # tokenizer.eos_token_id only valid for llama2
         "max_new_tokens": script_args.output_max_length,
         "batch_size": script_args.batch_size,
-        "cache_implementation": "static",
+        # "cache_implementation": "static",
     }
     # output_min_length = 32
     # output_max_length = script_args.output_max_length
@@ -319,7 +345,7 @@ def main(
 
         # Compute rewards
         rewards = [
-            torch.tensor(get_reward_discrete(output), dtype=torch.float16)
+            torch.tensor(get_reward_discrete(output), dtype=torch.float32)
             for output in validation_results
         ]
         print("Rewards: ", rewards)
