@@ -99,7 +99,7 @@ def vllm_evaluate_batch(
     temperature=0.1,
     top_p=0.95,
     top_k=10,
-    num_beams=1,
+    number_of_generation_per_sample=1,
     max_new_tokens=1024 * 4,
     lora_adapter_path=None,
 ):
@@ -108,27 +108,15 @@ def vllm_evaluate_batch(
         prompter.generate_prompt(instruction, input)
         for instruction, input in zip(instruction_list, input_list)
     ]
-    if num_beams == 1:
-        sampling_params = SamplingParams(top_k=top_k,
-                                         temperature=temperature,
-                                         top_p=top_p,
-                                         max_tokens=max_new_tokens,
-                                         min_tokens=256)
-    else:
-        # This is for beam search in vllm
-        sampling_params = SamplingParams(n=num_beams,
-                                         top_k=-1,
-                                         temperature=0,
-                                         top_p=1,
-                                         max_tokens=4096,
-                                         min_tokens=32,
-                                         use_beam_search=True)
+    sampling_params = SamplingParams(n=number_of_generation_per_sample,
+                                    top_k=top_k,
+                                        temperature=temperature,
+                                        top_p=top_p,
+                                        max_tokens=max_new_tokens,
+                                        min_tokens=256)
     lora_request = LoRARequest("lora", 1, lora_adapter_path) if lora_adapter_path else None
     sequences = llm.generate(prompt_list, sampling_params, lora_request=lora_request)
-    if num_beams == 1:
-        results = [seq.outputs[0].text for seq in sequences]
-    else:
-        results = [[out.text for out in seq.outputs] for seq in sequences]
+    results = [[out.text for out in seq.outputs] for seq in sequences]
     return results
 
 
@@ -139,7 +127,7 @@ def exebench_evaluate(programs,
                       result_file: str = "val_result.json",
                       batch_size: int = 1,
                       llm=None,
-                      num_beams=1,
+                      number_of_generation_per_sample=1,
                       lora_adapter_path=None):
     results = []
     count = len(programs) // batch_size
@@ -158,7 +146,7 @@ def exebench_evaluate(programs,
                                                         llm,
                                                         batch_p,
                                                         input_list=batch_input,
-                                                        num_beams=num_beams,
+                                                        number_of_generation_per_sample=number_of_generation_per_sample,
                                                         lora_adapter_path=lora_adapter_path)
                 else:
                     batch_predict = evaluate_batch(prompter,
@@ -166,15 +154,17 @@ def exebench_evaluate(programs,
                                                    model,
                                                    batch_p,
                                                    input_list=batch_input)
-                batch_output = [{
-                    "instruction": input_str,
-                    "input": p["asm"]["code"][-1],
-                    "predict": predict,
-                    "file": p["path"],
-                    "output": p["llvm_ir"]["code"],
-                    "func_head_types": p["func_head_types"]
-                } for p, predict in zip(programs.select(range(start, end)),
-                                        batch_predict)]
+                batch_output = [
+                    {
+                        "instruction": input_str,
+                        "input": p["asm"]["code"][-1],
+                        "predict": predict,
+                        "file": p["path"],
+                        "output": p["llvm_ir"]["code"],
+                        "func_head_types": p["func_head_types"]
+                    } for p, predict in zip(programs.select(range(start, end)),
+                                        batch_predict)                        
+                ]
                 results.extend(batch_output)
                 for p in batch_output:
                     json.dump(p,
@@ -190,14 +180,13 @@ def exebench_evaluate(programs,
         json.dump(results, f, indent=4, sort_keys=True, separators=(',', ':'))
 
 
-def exebench_main(batch_size=8, 
-                  num_beams = 8, 
+def exebench_main(batch_size = 8, 
+                  number_of_generation_per_sample = 1,
                   pretrained_model_path = "/home/xiachunwei/Datasets/Models/llm-compiler-7b-ftd",
                   dataset_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff_sample_100",
                   result_file = f"exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-7b-ftd-beams-8",
                   lora_adapter_path = "llmcompiler-7b-GRPO-execution/checkpoint-100/",
-                #   framework="vllm" # or "transformers"
-                framework="transformers"
+                framework="vllm"
     ):
     
     # model, tokenizer = get_llmcompiler_model(pretrained_model_path)
@@ -207,20 +196,11 @@ def exebench_main(batch_size=8,
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_path)
     tokenizer.pad_token = tokenizer.eos_token
     programs = load_from_disk(dataset_path)
-    # programs = programs.select(range(64))
-
-    def get_length(p):
-        p['asm_len'] = len(tokenizer(p["asm"]["code"][-1])['input_ids'])
-        return p
-    # programs = programs.map(get_length, num_proc=40)
-    # programs = programs.sort("asm_len")
+    # We can consider sort according to number of instructions
 
     enable_lora=True if lora_adapter_path is not None else False
     if framework == "vllm":
-        if batch_size > 1:
-            llm = LLM(model=pretrained_model_path, max_num_seqs=batch_size, enable_lora=enable_lora)
-        else:
-            llm = LLM(model=pretrained_model_path, enable_lora=enable_lora)
+        llm = LLM(model=pretrained_model_path, dtype="bfloat16", max_num_seqs=batch_size * number_of_generation_per_sample, enable_lora=enable_lora, max_lora_rank=32)
     else:
         model = AutoModelForCausalLM.from_pretrained(pretrained_model_path)
         if lora_adapter_path:
@@ -237,7 +217,7 @@ def exebench_main(batch_size=8,
         result_file=result_file,
         batch_size=batch_size,
         llm=llm,
-        num_beams=num_beams,
+        number_of_generation_per_sample=number_of_generation_per_sample,
         lora_adapter_path=lora_adapter_path)
 
 
