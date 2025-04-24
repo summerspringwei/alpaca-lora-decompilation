@@ -1,0 +1,8 @@
+Instruction does not dominate all uses!
+  %status_ptr2 = getelementptr inbounds %struct.kr_db, ptr %rbx, i32 0, i32 0
+  %status = load i32, ptr %status_ptr2, align 4
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_67/predict.ll': input module cannot be verified
+Instruction does not dominate all uses!
+  %status_ptr2 = getelementptr inbounds %struct.kr_db, ptr %rbx, i32 0, i32 0
+  %status = load i32, ptr %status_ptr2, align 4
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_67/predict.ll': input module cannot be verified

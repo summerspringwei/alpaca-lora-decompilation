@@ -1,0 +1,9 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_60/predict.ll:27:6: error: expected '=' after instruction id
+  %56hz = load i32, i32* @GFX_MODE_56HZ
+     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_60/predict.ll:27:6: error: expected '=' after instruction id
+  %56hz = load i32, i32* @GFX_MODE_56HZ
+     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_60/predict.ll:27:6: error: expected '=' after instruction id
+  %56hz = load i32, i32* @GFX_MODE_56HZ
+     ^

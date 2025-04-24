@@ -1,0 +1,33 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:2:46: error: base element of getelementptr must be sized
+  %3 = getelementptr inbounds %struct.e6502, %struct.e6502* %0, i32 0, i32 0
+                                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:2:46: error: base element of getelementptr must be sized
+  %3 = getelementptr inbounds %struct.e6502, %struct.e6502* %0, i32 0, i32 0
+                                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:2:46: error: base element of getelementptr must be sized
+  %3 = getelementptr inbounds %struct.e6502, %struct.e6502* %0, i32 0, i32 0
+                                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:2:46: error: base element of getelementptr must be sized
+  %3 = getelementptr inbounds %struct.e6502, %struct.e6502* %0, i32 0, i32 0
+                                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:2:46: error: base element of getelementptr must be sized
+  %3 = getelementptr inbounds %struct.e6502, %struct.e6502* %0, i32 0, i32 0
+                                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:2:46: error: base element of getelementptr must be sized
+  %3 = getelementptr inbounds %struct.e6502, %struct.e6502* %0, i32 0, i32 0
+                                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:2:46: error: base element of getelementptr must be sized
+  %3 = getelementptr inbounds %struct.e6502, %struct.e6502* %0, i32 0, i32 0
+                                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:2:46: error: base element of getelementptr must be sized
+  %3 = getelementptr inbounds %struct.e6502, %struct.e6502* %0, i32 0, i32 0
+                                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:2:46: error: base element of getelementptr must be sized
+  %3 = getelementptr inbounds %struct.e6502, %struct.e6502* %0, i32 0, i32 0
+                                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:16:13: error: use of undefined value '@XSetClipRectangles'
+  call void @XSetClipRectangles(ptr %12, i64 %8, i32 0, i32 0, ptr %0, i32 1, i32 %13)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_91/predict.ll:16:13: error: use of undefined value '@XSetClipRectangles'
+  call void @XSetClipRectangles(ptr %12, i64 %8, i32 0, i32 0, ptr %0, i32 1, i32 %13)
+            ^

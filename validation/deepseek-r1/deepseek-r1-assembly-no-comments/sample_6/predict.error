@@ -1,0 +1,30 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_6/predict.ll:8:61: error: invalid use of function-local name
+  %ecx_val = load i32, ptr getelementptr inbounds (i32, ptr %reg_ptr, i64 4)
+                                                            ^

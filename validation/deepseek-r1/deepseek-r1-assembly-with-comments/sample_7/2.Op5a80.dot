@@ -1,0 +1,17 @@
+digraph "CFG for 'Op5a80' function" {
+	label="CFG for 'Op5a80' function";
+
+	Node0x557ad4ecc9f0 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{entry|{<s0>T|<s1>F}}"];
+	Node0x557ad4ecc9f0 -> Node0x557ad4ecca40;
+	Node0x557ad4ecc9f0 -> Node0x557ad4ecc9a0;
+	Node0x557ad4ecc9a0 [shape=record,color="#b70d28ff", style=filled, fillcolor="#e36c5570",label="{if.then29|{<s0>T|<s1>F}}"];
+	Node0x557ad4ecc9a0 -> Node0x557ad4ecc900;
+	Node0x557ad4ecc9a0 -> Node0x557ad4ed0720;
+	Node0x557ad4ecc900 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f6bfa670",label="{if.then33}"];
+	Node0x557ad4ecc900 -> Node0x557ad4ed09c0;
+	Node0x557ad4ecca40 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f7b39670",label="{if.else36}"];
+	Node0x557ad4ecca40 -> Node0x557ad4ed09c0;
+	Node0x557ad4ed09c0 [shape=record,color="#b70d28ff", style=filled, fillcolor="#de614d70",label="{if.end39.sink.split}"];
+	Node0x557ad4ed09c0 -> Node0x557ad4ed0720;
+	Node0x557ad4ed0720 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{if.end39}"];
+}

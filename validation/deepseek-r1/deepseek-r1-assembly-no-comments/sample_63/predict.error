@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_63/predict.ll:18:3: error: instruction forward referenced with type 'label'
+  %7 = fcmp ult float %0, %6
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_63/predict.ll:18:3: error: instruction forward referenced with type 'label'
+  %7 = fcmp ult float %0, %6
+  ^

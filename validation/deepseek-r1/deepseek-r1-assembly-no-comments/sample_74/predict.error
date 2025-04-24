@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_74/predict.ll:3:13: error: use of undefined value '@mtx_lock'
+  call void @mtx_lock(i8* %2)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_74/predict.ll:3:13: error: use of undefined value '@mtx_lock'
+  call void @mtx_lock(i8* %2)
+            ^

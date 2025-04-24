@@ -1,0 +1,30 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_18/predict.ll:2:22: error: use of undefined value '@BACKWARDS_SEARCH'
+  %1 = load i32, ptr @BACKWARDS_SEARCH, align 4
+                     ^

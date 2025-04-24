@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_90/predict.ll:21:52: error: '%counter_val' defined with type 'i32' but expected 'i64'
+  call void @STORE64_LE(i8* %state_ptr_actual, i64 %counter_val)
+                                                   ^

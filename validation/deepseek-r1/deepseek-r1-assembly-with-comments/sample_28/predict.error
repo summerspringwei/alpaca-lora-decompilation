@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_28/predict.ll:17:9: error: expected '=' here
+  align 16
+        ^

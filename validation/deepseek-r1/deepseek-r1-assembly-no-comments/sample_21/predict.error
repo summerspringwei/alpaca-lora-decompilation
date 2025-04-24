@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_21/predict.ll:23:1: error: label expected to be numbered '12'
+14:                                               ; preds = %6, %4
+^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_21/predict.ll:23:1: error: label expected to be numbered '12'
+14:                                               ; preds = %6, %4
+^

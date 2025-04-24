@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_26/predict.ll:17:23: error: use of undefined value '@search_init'
+  %11 = tail call i32 @search_init(i32 %10, i32 %10)
+                      ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_26/predict.ll:17:23: error: use of undefined value '@search_init'
+  %11 = tail call i32 @search_init(i32 %10, i32 %10)
+                      ^

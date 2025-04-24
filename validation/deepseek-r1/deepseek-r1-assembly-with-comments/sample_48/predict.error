@@ -1,0 +1,9 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_48/predict.ll:8:30: error: expected instruction opcode
+  %7 = bitcast ptr %1 to ptr <2 x i32>
+                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_48/predict.ll:8:30: error: expected instruction opcode
+  %7 = bitcast ptr %1 to ptr <2 x i32>
+                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_48/predict.ll:8:30: error: expected instruction opcode
+  %7 = bitcast ptr %1 to ptr <2 x i32>
+                             ^

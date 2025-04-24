@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_56/predict.ll:8:13: error: use of undefined value '@be_cq_notify'
+  call void @be_cq_notify(i8* %arg, i32 %3, i32 1, i32 0)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_56/predict.ll:8:13: error: use of undefined value '@be_cq_notify'
+  call void @be_cq_notify(i8* %arg, i32 %3, i32 1, i32 0)
+            ^

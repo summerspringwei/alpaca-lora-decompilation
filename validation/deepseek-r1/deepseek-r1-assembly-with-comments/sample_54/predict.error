@@ -1,0 +1,30 @@
+PHI node entries do not match predecessors!
+  %86 = phi i32 [ %13, %LBB0_2 ], [ %19, %cleanup23 ], [ 1, %LBB0_33 ], [ %63, %cleanup.cont105 ], [ %36, %cleanup137 ], [ %70, %cleanup164 ], [ %65, %cleanup120 ], [ %84, %cleanup183 ]
+label %LBB0_2
+label %LBB0_20
+Instruction does not dominate all uses!
+  %13 = phi i32 [ %3, %cleanup6.cleanup.cont8_crit_edge ], [ %3, %cleanup6.thread ]
+  %86 = phi i32 [ %13, %LBB0_2 ], [ %19, %cleanup23 ], [ 1, %LBB0_33 ], [ %63, %cleanup.cont105 ], [ %36, %cleanup137 ], [ %70, %cleanup164 ], [ %65, %cleanup120 ], [ %84, %cleanup183 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_54/predict.ll': input module cannot be verified
+PHI node entries do not match predecessors!
+  %86 = phi i32 [ %13, %LBB0_2 ], [ %19, %cleanup23 ], [ 1, %LBB0_33 ], [ %63, %cleanup.cont105 ], [ %36, %cleanup137 ], [ %70, %cleanup164 ], [ %65, %cleanup120 ], [ %84, %cleanup183 ]
+label %LBB0_2
+label %LBB0_20
+Instruction does not dominate all uses!
+  %13 = phi i32 [ %3, %cleanup6.cleanup.cont8_crit_edge ], [ %3, %cleanup6.thread ]
+  %86 = phi i32 [ %13, %LBB0_2 ], [ %19, %cleanup23 ], [ 1, %LBB0_33 ], [ %63, %cleanup.cont105 ], [ %36, %cleanup137 ], [ %70, %cleanup164 ], [ %65, %cleanup120 ], [ %84, %cleanup183 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_54/predict.ll': input module cannot be verified
+PHI node entries do not match predecessors!
+  %86 = phi i32 [ %13, %LBB0_2 ], [ %19, %cleanup23 ], [ 1, %LBB0_33 ], [ %63, %cleanup.cont105 ], [ %36, %cleanup137 ], [ %70, %cleanup164 ], [ %65, %cleanup120 ], [ %84, %cleanup183 ]
+label %LBB0_2
+label %LBB0_20
+Instruction does not dominate all uses!
+  %13 = phi i32 [ %3, %cleanup6.cleanup.cont8_crit_edge ], [ %3, %cleanup6.thread ]
+  %86 = phi i32 [ %13, %LBB0_2 ], [ %19, %cleanup23 ], [ 1, %LBB0_33 ], [ %63, %cleanup.cont105 ], [ %36, %cleanup137 ], [ %70, %cleanup164 ], [ %65, %cleanup120 ], [ %84, %cleanup183 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_54/predict.ll': input module cannot be verified
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments//sample_54/predict.ll:24:1: error: expected top-level entity
+@ s_16   = external constant i32          ; literals used by eq_s_b
+^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments//sample_54/predict.ll:124:56: error: invalid use of function-local name
+  store i32 %save_c2, i32* getelementptr (i8, %SN_env* %env, i64 16) ; env->ket = env->c
+                                                       ^

@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_93/predict.ll:3:3: error: instruction expected to be numbered '%2'
+  %3 = call i32 @strhash(i8* %1)
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_93/predict.ll:3:3: error: instruction expected to be numbered '%2'
+  %3 = call i32 @strhash(i8* %1)
+  ^

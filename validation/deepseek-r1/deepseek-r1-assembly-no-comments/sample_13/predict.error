@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_13/predict.ll:16:26: error: use of undefined value '@areg'
+  %11 = load i32*, i32** @areg
+                         ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_13/predict.ll:16:26: error: use of undefined value '@areg'
+  %11 = load i32*, i32** @areg
+                         ^

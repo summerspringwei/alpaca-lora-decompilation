@@ -1,0 +1,27 @@
+PHINode should have one entry for each predecessor of its parent basic block!
+  %30 = phi i32 [ %20, %18 ], [ %26, %27 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_70/predict.ll': input module cannot be verified
+PHINode should have one entry for each predecessor of its parent basic block!
+  %30 = phi i32 [ %20, %18 ], [ %26, %27 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_70/predict.ll': input module cannot be verified
+PHINode should have one entry for each predecessor of its parent basic block!
+  %30 = phi i32 [ %20, %18 ], [ %26, %27 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_70/predict.ll': input module cannot be verified
+PHINode should have one entry for each predecessor of its parent basic block!
+  %30 = phi i32 [ %20, %18 ], [ %26, %27 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_70/predict.ll': input module cannot be verified
+PHINode should have one entry for each predecessor of its parent basic block!
+  %30 = phi i32 [ %20, %18 ], [ %26, %27 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_70/predict.ll': input module cannot be verified
+PHINode should have one entry for each predecessor of its parent basic block!
+  %30 = phi i32 [ %20, %18 ], [ %26, %27 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_70/predict.ll': input module cannot be verified
+PHINode should have one entry for each predecessor of its parent basic block!
+  %30 = phi i32 [ %20, %18 ], [ %26, %27 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_70/predict.ll': input module cannot be verified
+PHINode should have one entry for each predecessor of its parent basic block!
+  %30 = phi i32 [ %20, %18 ], [ %26, %27 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_70/predict.ll': input module cannot be verified
+PHINode should have one entry for each predecessor of its parent basic block!
+  %30 = phi i32 [ %20, %18 ], [ %26, %27 ]
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_70/predict.ll': input module cannot be verified

@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_9/predict.ll:19:5: error: expected '=' after instruction id
+  %0_plus1 = getelementptr inbounds i32, i32* %0, i64 1
+    ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_9/predict.ll:19:5: error: expected '=' after instruction id
+  %0_plus1 = getelementptr inbounds i32, i32* %0, i64 1
+    ^

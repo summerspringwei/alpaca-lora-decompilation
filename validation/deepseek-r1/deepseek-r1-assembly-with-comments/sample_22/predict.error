@@ -1,0 +1,9 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_22/predict.ll:2:29: error: expected type
+    i32,                    // 0-4
+                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_22/predict.ll:2:29: error: expected type
+    i32,                    // 0-4
+                            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_22/predict.ll:2:29: error: expected type
+    i32,                    // 0-4
+                            ^

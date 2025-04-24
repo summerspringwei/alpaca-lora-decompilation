@@ -1,0 +1,9 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_0/predict.ll:63:55: error: '%next_char' is not a basic block
+  br i1 %index_ge_253, label %handle_max_index, label %next_char
+                                                      ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_0/predict.ll:63:55: error: '%next_char' is not a basic block
+  br i1 %index_ge_253, label %handle_max_index, label %next_char
+                                                      ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_0/predict.ll:63:55: error: '%next_char' is not a basic block
+  br i1 %index_ge_253, label %handle_max_index, label %next_char
+                                                      ^

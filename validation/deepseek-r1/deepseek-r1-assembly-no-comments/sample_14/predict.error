@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_14/predict.ll:26:3: error: multiple definition of local value named 'ecx_val'
+  %ecx_val = and i32 %esi_initial, -32
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_14/predict.ll:26:3: error: multiple definition of local value named 'ecx_val'
+  %ecx_val = and i32 %esi_initial, -32
+  ^

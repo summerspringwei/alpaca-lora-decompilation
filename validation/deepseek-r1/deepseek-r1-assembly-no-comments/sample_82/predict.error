@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_82/predict.ll:8:13: error: use of undefined value '@ring_buffer_record_off'
+  call void @ring_buffer_record_off(ptr %3)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_82/predict.ll:8:13: error: use of undefined value '@ring_buffer_record_off'
+  call void @ring_buffer_record_off(ptr %3)
+            ^

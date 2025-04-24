@@ -1,0 +1,27 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_42/predict.ll:11:13: error: use of undefined value '@free_irq'
+  call void @free_irq(i32 %irq, i8* %hba_i8)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_42/predict.ll:11:13: error: use of undefined value '@free_irq'
+  call void @free_irq(i32 %irq, i8* %hba_i8)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_42/predict.ll:11:13: error: use of undefined value '@free_irq'
+  call void @free_irq(i32 %irq, i8* %hba_i8)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_42/predict.ll:11:13: error: use of undefined value '@free_irq'
+  call void @free_irq(i32 %irq, i8* %hba_i8)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_42/predict.ll:11:13: error: use of undefined value '@free_irq'
+  call void @free_irq(i32 %irq, i8* %hba_i8)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_42/predict.ll:11:13: error: use of undefined value '@free_irq'
+  call void @free_irq(i32 %irq, i8* %hba_i8)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_42/predict.ll:11:13: error: use of undefined value '@free_irq'
+  call void @free_irq(i32 %irq, i8* %hba_i8)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_42/predict.ll:11:13: error: use of undefined value '@free_irq'
+  call void @free_irq(i32 %irq, i8* %hba_i8)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_42/predict.ll:11:13: error: use of undefined value '@free_irq'
+  call void @free_irq(i32 %irq, i8* %hba_i8)
+            ^

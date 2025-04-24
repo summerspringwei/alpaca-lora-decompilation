@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_16/predict.ll:2:23: error: use of undefined value '@m68ki_cpu'
+  %1 = load i8*, i8** @m68ki_cpu, align 8
+                      ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_16/predict.ll:2:23: error: use of undefined value '@m68ki_cpu'
+  %1 = load i8*, i8** @m68ki_cpu, align 8
+                      ^

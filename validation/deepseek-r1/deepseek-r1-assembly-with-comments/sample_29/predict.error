@@ -1,0 +1,9 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_29/predict.ll:22:13: error: use of undefined value '@opj_mqc_byteout'
+  call void @opj_mqc_byteout(ptr %rbx)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_29/predict.ll:22:13: error: use of undefined value '@opj_mqc_byteout'
+  call void @opj_mqc_byteout(ptr %rbx)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_29/predict.ll:22:13: error: use of undefined value '@opj_mqc_byteout'
+  call void @opj_mqc_byteout(ptr %rbx)
+            ^

@@ -1,0 +1,5 @@
+PHI node entries do not match predecessors!
+  %index = phi i64 [ 0, %read_line ], [ %index_next, %copy_cont ]
+label %copy_cont
+label %check_index
+llc: error: 'validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_0/predict.ll': input module cannot be verified

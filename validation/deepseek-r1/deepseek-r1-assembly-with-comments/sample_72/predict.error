@@ -1,0 +1,9 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_72/predict.ll:22:13: error: use of undefined value '@addIfPrime'
+  call void @addIfPrime(i64 %current)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_72/predict.ll:22:13: error: use of undefined value '@addIfPrime'
+  call void @addIfPrime(i64 %current)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_72/predict.ll:22:13: error: use of undefined value '@addIfPrime'
+  call void @addIfPrime(i64 %current)
+            ^

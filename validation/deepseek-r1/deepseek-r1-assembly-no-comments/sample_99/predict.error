@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_99/predict.ll:6:13: error: use of undefined value '@e6502_set_mem8'
+  call void @e6502_set_mem8(i32* %0, i32 %4, i8 %6)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_99/predict.ll:6:13: error: use of undefined value '@e6502_set_mem8'
+  call void @e6502_set_mem8(i32* %0, i32 %4, i8 %6)
+            ^

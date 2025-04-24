@@ -1,0 +1,9 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_64/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = and i32 %0, 127
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_64/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = and i32 %0, 127
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_64/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = and i32 %0, 127
+  ^

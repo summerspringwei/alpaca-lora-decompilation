@@ -1,0 +1,33 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:18:13: error: expected instruction opcode
+  %struct = ptr %0
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:18:13: error: expected instruction opcode
+  %struct = ptr %0
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:18:13: error: expected instruction opcode
+  %struct = ptr %0
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:18:13: error: expected instruction opcode
+  %struct = ptr %0
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:18:13: error: expected instruction opcode
+  %struct = ptr %0
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:18:13: error: expected instruction opcode
+  %struct = ptr %0
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:18:13: error: expected instruction opcode
+  %struct = ptr %0
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:18:13: error: expected instruction opcode
+  %struct = ptr %0
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:18:13: error: expected instruction opcode
+  %struct = ptr %0
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:13:30: error: expected instruction opcode
+  %8 = bitcast ptr %7 to ptr i64
+                             ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_53/predict.ll:13:30: error: expected instruction opcode
+  %8 = bitcast ptr %7 to ptr i64
+                             ^

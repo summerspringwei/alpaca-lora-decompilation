@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_3/target.ll:1:2: error: expected top-level entity
+        .text
+        ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_3/target.ll:1:2: error: expected top-level entity
+        .text
+        ^

@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_85/predict.ll:3:20: error: use of undefined type named 'struct.dce110_res_pool'
+  %res_pool = call %struct.dce110_res_pool* @TO_DCE110_RES_POOL(i8* %1)
+                   ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_85/predict.ll:3:20: error: use of undefined type named 'struct.dce110_res_pool'
+  %res_pool = call %struct.dce110_res_pool* @TO_DCE110_RES_POOL(i8* %1)
+                   ^

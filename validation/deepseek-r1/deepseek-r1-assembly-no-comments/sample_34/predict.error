@@ -1,0 +1,27 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_34/predict.ll:9:18: error: use of undefined value '@dma_fence_put'
+  tail call void @dma_fence_put(i64* %old_val)
+                 ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_34/predict.ll:9:18: error: use of undefined value '@dma_fence_put'
+  tail call void @dma_fence_put(i64* %old_val)
+                 ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_34/predict.ll:9:18: error: use of undefined value '@dma_fence_put'
+  tail call void @dma_fence_put(i64* %old_val)
+                 ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_34/predict.ll:9:18: error: use of undefined value '@dma_fence_put'
+  tail call void @dma_fence_put(i64* %old_val)
+                 ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_34/predict.ll:9:18: error: use of undefined value '@dma_fence_put'
+  tail call void @dma_fence_put(i64* %old_val)
+                 ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_34/predict.ll:9:18: error: use of undefined value '@dma_fence_put'
+  tail call void @dma_fence_put(i64* %old_val)
+                 ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_34/predict.ll:9:18: error: use of undefined value '@dma_fence_put'
+  tail call void @dma_fence_put(i64* %old_val)
+                 ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_34/predict.ll:9:18: error: use of undefined value '@dma_fence_put'
+  tail call void @dma_fence_put(i64* %old_val)
+                 ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_34/predict.ll:9:18: error: use of undefined value '@dma_fence_put'
+  tail call void @dma_fence_put(i64* %old_val)
+                 ^

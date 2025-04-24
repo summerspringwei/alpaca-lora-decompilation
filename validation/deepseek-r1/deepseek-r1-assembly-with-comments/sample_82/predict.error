@@ -1,0 +1,9 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_82/predict.ll:8:22: error: use of undefined value '@ring_buffer_record_off'
+  %6 = tail call i32 @ring_buffer_record_off(ptr %3)
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_82/predict.ll:8:22: error: use of undefined value '@ring_buffer_record_off'
+  %6 = tail call i32 @ring_buffer_record_off(ptr %3)
+                     ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-with-comments/sample_82/predict.ll:8:22: error: use of undefined value '@ring_buffer_record_off'
+  %6 = tail call i32 @ring_buffer_record_off(ptr %3)
+                     ^

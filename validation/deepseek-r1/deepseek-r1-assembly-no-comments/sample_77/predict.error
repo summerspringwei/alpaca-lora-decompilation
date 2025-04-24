@@ -1,0 +1,27 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_77/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = load i8*, i8** %rbx, align 8
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_77/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = load i8*, i8** %rbx, align 8
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_77/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = load i8*, i8** %rbx, align 8
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_77/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = load i8*, i8** %rbx, align 8
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_77/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = load i8*, i8** %rbx, align 8
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_77/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = load i8*, i8** %rbx, align 8
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_77/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = load i8*, i8** %rbx, align 8
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_77/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = load i8*, i8** %rbx, align 8
+  ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_77/predict.ll:5:3: error: instruction expected to be numbered '%2'
+  %1 = load i8*, i8** %rbx, align 8
+  ^

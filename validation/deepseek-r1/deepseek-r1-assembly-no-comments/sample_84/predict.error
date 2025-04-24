@@ -1,0 +1,6 @@
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_84/predict.ll:7:13: error: use of undefined value '@nni_plat_cv_wake'
+  call void @nni_plat_cv_wake(i8* %cv_ptr)
+            ^
+llc: error: llc: validation/deepseek-r1/deepseek-r1-assembly-no-comments/sample_84/predict.ll:7:13: error: use of undefined value '@nni_plat_cv_wake'
+  call void @nni_plat_cv_wake(i8* %cv_ptr)
+            ^

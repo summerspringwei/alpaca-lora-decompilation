@@ -1,0 +1,17 @@
+digraph "CFG for 'Op5a80' function" {
+	label="CFG for 'Op5a80' function";
+
+	Node0x55811ce959f0 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{entry:\l  %0 = load i32, ptr @inst, align 4, !tbaa !5\l  %and = and i32 %0, 7\l  %conv = zext i32 %and to i64\l  %1 = load ptr, ptr @reg, align 8, !tbaa !9\l  %arrayidx = getelementptr inbounds i32, ptr %1, i64 %conv\l  %2 = load i32, ptr %arrayidx, align 4, !tbaa !5\l  %3 = load i32, ptr @status, align 4\l  %and6 = and i32 %3, -20\l  %cmp9 = icmp sgt i32 %2, -6\l  %masksel = select i1 %cmp9, i32 17, i32 0\l  %add = add nsw i32 %2, 5\l  %and26 = or i32 %and6, %masksel\l  %tobool28.not = icmp eq i32 %add, 0\l  br i1 %tobool28.not, label %if.else36, label %if.then29\l|{<s0>T|<s1>F}}"];
+	Node0x55811ce959f0:s0 -> Node0x55811ce95a40;
+	Node0x55811ce959f0:s1 -> Node0x55811ce959a0;
+	Node0x55811ce959a0 [shape=record,color="#b70d28ff", style=filled, fillcolor="#e36c5570",label="{if.then29:                                        \l  %cmp17 = icmp slt i32 %2, -5\l  %and30 = and i32 %and26, -15\l  store i32 %and30, ptr @status, align 4, !tbaa !5\l  br i1 %cmp17, label %if.then33, label %if.end39\l|{<s0>T|<s1>F}}"];
+	Node0x55811ce959a0:s0 -> Node0x55811ce95900;
+	Node0x55811ce959a0:s1 -> Node0x55811ce99720;
+	Node0x55811ce95900 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f6bfa670",label="{if.then33:                                        \l  %or34 = or i32 %and30, 8\l  br label %if.end39.sink.split\l}"];
+	Node0x55811ce95900 -> Node0x55811ce999c0;
+	Node0x55811ce95a40 [shape=record,color="#3d50c3ff", style=filled, fillcolor="#f7b39670",label="{if.else36:                                        \l  %or37 = and i32 %and26, -15\l  %and38 = or i32 %or37, 4\l  br label %if.end39.sink.split\l}"];
+	Node0x55811ce95a40 -> Node0x55811ce999c0;
+	Node0x55811ce999c0 [shape=record,color="#b70d28ff", style=filled, fillcolor="#de614d70",label="{if.end39.sink.split:                              \l  %or34.sink = phi i32 [ %or34, %if.then33 ], [ %and38, %if.else36 ]\l  store i32 %or34.sink, ptr @status, align 4, !tbaa !5\l  br label %if.end39\l}"];
+	Node0x55811ce999c0 -> Node0x55811ce99720;
+	Node0x55811ce99720 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{if.end39:                                         \l  store i32 %add, ptr %arrayidx, align 4, !tbaa !5\l  ret void\l}"];
+}
