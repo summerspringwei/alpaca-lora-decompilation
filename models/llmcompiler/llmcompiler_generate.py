@@ -128,7 +128,8 @@ def exebench_evaluate(programs,
                       batch_size: int = 1,
                       llm=None,
                       number_of_generation_per_sample=1,
-                      lora_adapter_path=None):
+                      lora_adapter_path=None,
+                      remove_comments=False):
     results = []
     count = len(programs) // batch_size
     with open(result_file + "_inc", "a") as f:
@@ -138,7 +139,7 @@ def exebench_evaluate(programs,
                 end = min((i + 1) * batch_size, len(programs))
                 batch_p = [input_str] * batch_size
                 batch_input = [
-                    preprocessing_assembly(p["asm"]["code"][-1])
+                    preprocessing_assembly(p["asm"]["code"][-1], remove_comments=remove_comments)
                     for p in programs.select(range(start, end))
                 ]
                 if llm is not None:
@@ -186,7 +187,8 @@ def exebench_main(batch_size = 8,
                   dataset_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff_sample_100",
                   result_file = f"exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-7b-ftd-beams-8",
                   lora_adapter_path = "llmcompiler-7b-GRPO-execution/checkpoint-100/",
-                framework="vllm"
+                framework="vllm",
+                remove_comments=False
     ):
     
     # model, tokenizer = get_llmcompiler_model(pretrained_model_path)
@@ -218,7 +220,8 @@ def exebench_main(batch_size = 8,
         batch_size=batch_size,
         llm=llm,
         number_of_generation_per_sample=number_of_generation_per_sample,
-        lora_adapter_path=lora_adapter_path)
+        lora_adapter_path=lora_adapter_path,
+        remove_comments=remove_comments)
 
 
 if __name__ == "__main__":

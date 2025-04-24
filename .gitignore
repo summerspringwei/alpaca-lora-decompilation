@@ -40,3 +40,6 @@ deepseek-coder-1.3b*
 test3.py
 checkpoints/
 runs/
+validation/deepseek-r1/
+validation/glm-z1-32B/
+validation/openai-gpt/

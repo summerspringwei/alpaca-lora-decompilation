@@ -43,7 +43,7 @@ def compile_llvm_ir(llvm_ir: str, compile_dir: str, name_hint)->tuple[bool, str]
             success = True
         else:
             # Save the stderr output to the specified file
-            with open(error_path, 'a') as f:
+            with open(error_path, 'w') as f:
                 f.write(ret.stderr.decode())
             success = False
     except Exception as e:

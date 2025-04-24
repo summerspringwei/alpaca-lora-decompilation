@@ -6,17 +6,17 @@ import torch.nn.functional as F
 import torch
 
 def get_reward_discrete(output: Dict) -> float:
-    reward = -1
+    reward = 0
     if not output["target_execution_success"]:
         reward = 0
     elif isinstance(output["predict_execution_success"], list) and any(
             output["predict_execution_success"]):
-        reward = 1
+        reward = 0
     elif isinstance(output["predict_compile_success"], list) and any(
             output["predict_compile_success"]):
-        reward = 0.8
+        reward = 1
     else:
-        reward = -1
+        reward = 0
 
     return reward
 
