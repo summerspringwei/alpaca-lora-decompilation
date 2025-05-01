@@ -9,7 +9,26 @@ clang  -I. -I./lib  -Ilib -I./lib -Isrc -I./src $FLAGS -O2 -MT src/basename.o -M
 Note the option `-fno-asynchronous-unwind-tables` will strip the debug info like ".cfi_xxx"
 
 
+We add the following lines to coreutils makefile to compile `.c` to `.ll`:
+```makefile
+%.ll: %.c
+	$(AM_V_CC)clang -S -emit-llvm \
+	$(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(lib_libcoreutils_a_CFLAGS) $(CFLAGS) \
+	-o $@ $<
+```
+
+
+Extract the cfg
+```bash
+opt -passes=dot-cfg-only target.ll
+```
 ### The overall workflow:
+
+Compile C file to.ll
+```bash
+make src/tail.ll
+```
 
 1. Extract one function from LLVM IR file:
 ```bash
@@ -46,5 +65,19 @@ clang  -Wno-format-extra-args -Wno-implicit-const-int-float-conversion -Wno-taut
 
 8. Run the test:
 ```bash
-make TESTS=tests/tail/overlay-headers.sh check VERBOSE=yes
+# make TESTS=tests/tail/overlay-headers.sh check VERBOSE=yes
+TAILTESTS=`make listtests | tr ' ' '\n' | grep '^tests/tail'`
+make check TESTS='${TAILTESTS}'
 ```
+or
+```bash
+make check TESTS="$(make listtests | tr ' ' '\n' | grep '^tests/tail')"
+```
+
+Note we add the following code in the Makefile:
+```makefile
+listtests:
+	$(info VALUE of TESTS = $(TESTS))
+```
+The reason is that the `TESTS` variable contains all the tests for the `coreutils`.
+

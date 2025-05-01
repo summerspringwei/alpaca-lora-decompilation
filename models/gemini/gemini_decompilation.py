@@ -1,6 +1,6 @@
 import os
 import json
-import re
+
 import pickle
 import logging
 from openai import OpenAI
@@ -10,22 +10,10 @@ from datasets import load_from_disk, Dataset
 from multiprocessing import Pool
 from utils.evaluate_exebench import compile_llvm_ir, eval_assembly
 from utils.preprocessing_assembly import preprocessing_assembly
+from .openai_helper import extract_llvm_code_from_response, format_compile_prompt, format_execution_prompt
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(filename)s: %(lineno)d - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
-
-def extract_llvm_code(markdown_content: str):
-    llvm_code_blocks = []
-    # Use a non-greedy regex to match multiple code blocks
-    pattern = r"```llvm\n(.*?)\n```"  # The \n is crucial to prevent matching across blocks
-    matches = re.findall(pattern, markdown_content, re.DOTALL) # re.DOTALL to match across multiple lines
-
-    if matches:
-        llvm_code_blocks = matches
-
-    return llvm_code_blocks
-
 
 global client
 # DeepSeek-R1 on huoshan engine
@@ -86,19 +74,6 @@ def prepare_prompt(record, remove_comments: bool = True):
 #     return predict
 
 
-def extract_llvm_code_from_response(response):
-    if response.choices and len(response.choices) > 0:
-        result = response.choices[0].message.content
-        # extract the content after </think>
-        if result.find("</think>") != -1:
-            result = result.split("</think>")[-1].strip()
-        llvm_code = extract_llvm_code(result)
-        if len(llvm_code) == 0:
-            logger.warning(f"No LLVM code found in the response: {result}")
-        return llvm_code[0] if len(llvm_code) > 0 else ""
-    else:
-        logger.warning("No choices found in the response.")
-    return ""
 
 
 def evaluate_response(response, record, idx, validate_dir):
@@ -207,28 +182,6 @@ def main(dataset_dir_path = "/home/xiachunwei/Datasets/filtered_exebench/train_s
     validate_all(dataset, output_dir)
 
 
-def format_compile_prompt(target_assembly, predict, error_msg):
-    prompt = f"""Please decompile the following assembly code to LLVM IR and please place the final generated LLVM IR code between ```llvm and ```:\n
-            {target_assembly} \n 
-            Note that LLVM IR follow the Static Single Assignment format, which mean a variable can only be defined once.\n
-            You generated the following LLVM IR but it is failed to be compiled: ```llvm\n{predict}```\n 
-            The compilation error message is as follows: {error_msg}
-            Please correct the LLVM IR code and make sure it is correct.\n
-            place the final generated LLVM IR code between ```llvm and ```.
-            """
-    return prompt
-
-def format_execution_prompt(target_assembly, predict, predict_assembly):
-    prompt = f"""Please decompile the following assembly code to LLVM IR and please place the final generated LLVM IR code between ```llvm and ```:\n
-        {target_assembly} \n 
-        Note that LLVM IR follow the Static Single Assignment format, which mean a variable can only be defined once.\n
-        Then you generated the following LLVM IR: ```llvm\n{predict}```\n 
-        After I compile the LLVM IR you provided, the generated assembly is: {predict_assembly}\n
-        The result is not right. Please compare with the original result and re-generate the LLVM IR.\n
-        Place the final generated LLVM IR code between ```llvm and ```.
-        """
-
-    return prompt
 
 def correct_one(chat_response, idx: int, record: dict, output_dir: str, validation_result: dict, num_retry: int = 10) -> bool:
     predict = extract_llvm_code_from_response(chat_response)
