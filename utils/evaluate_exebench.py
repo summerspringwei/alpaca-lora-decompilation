@@ -38,7 +38,7 @@ def compile_llvm_ir(llvm_ir: str, compile_dir: str, name_hint)->tuple[bool, str]
     try:
         # 3. Compile the llvm ir to assembly
         cmd = ["llc", llvm_ir_path, "-o", assembly_path]
-        ret = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ret = subprocess.run(cmd, capture_output=True)
         if ret.returncode == 0:
             success = True
         else:
