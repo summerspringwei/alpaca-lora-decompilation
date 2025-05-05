@@ -1,5 +1,6 @@
 import os
 import re
+import json
 import pickle
 import logging
 import subprocess
@@ -12,6 +13,7 @@ from multiprocessing import Pool
 from utils.evaluate_exebench import compile_llvm_ir
 from utils.preprocessing_assembly import preprocessing_assembly
 from utils.openai_helper import extract_llvm_code_from_response, format_decompile_prompt, format_compile_error_prompt, format_execution_error_prompt
+import tempfile
 
 logging.basicConfig(level=logging.WARNING,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -53,13 +55,13 @@ def parse_test_results(output):
 
 def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
     # 0. Get response from the model
-    # response = huoshan_deepseek_r1(client, prompt)
+    response = huoshan_deepseek_r1(client, prompt)
     predict_compile_success = True
     predict_execution_success = True
     response_file_path = os.path.join(
         output_dir, f"response_{func_name}_retry_{count}.pkl")
-    # pickle.dump(response, open(response_file_path, "wb"))
-    response = pickle.load(open(response_file_path, "rb"))
+    pickle.dump(response, open(response_file_path, "wb"))
+    # response = pickle.load(open(response_file_path, "rb"))
     predict_llvm_ir = extract_llvm_code_from_response(response)
     # TODO: If the response is empty, we need to set a error message to retry
     if len(predict_llvm_ir) == 0:
@@ -132,6 +134,9 @@ def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
         }
     predict_compile_success = True
     # 5. Link the object file to the executable binary
+    target_binary_path = os.path.join(cwd, "src/tail")
+    if os.path.exists(target_binary_path):
+        os.remove(target_binary_path)
     run_command([
         "clang", "-Wno-format-extra-args",
         "-Wno-implicit-const-int-float-conversion",
@@ -145,14 +150,16 @@ def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
         "make", "check",
         "TESTS=\"$(make listtests | tr ' ' '\\n' | grep '^tests/tail')\""
     ]
-    with open("tmp.sh", "w") as f:
-        f.write("#!/bin/bash\n")
-        f.write("set -e\n")
-        f.write(f"cd {cwd}\n")
-        f.write(" ".join(cmd) + "\n")
-    os.chmod("tmp.sh", 0o755)
-    cmd = ["bash", "tmp.sh"]
+    with tempfile.NamedTemporaryFile(delete=False, mode='w', suffix='.sh') as temp_script:
+        temp_script.write("#!/bin/bash\n")
+        temp_script.write("set -e\n")
+        temp_script.write(f"cd {cwd}\n")
+        temp_script.write(" ".join(cmd) + "\n")
+    temp_script_path = temp_script.name
+    os.chmod(temp_script_path, 0o755)
+    cmd = ["bash", temp_script_path]
     results = subprocess.run(cmd, capture_output=True, text=True)
+    os.unlink(temp_script_path)
     logger.info(f"Test result: {results.stdout}")
     # 7. Check the test result
     test_result = parse_test_results(results.stdout)
@@ -245,14 +252,47 @@ def auto_test_one_function(func_name,
     # Placeholder for LLM decompilation logic (not specified in the prompt)
     decompilation_loop(client,
                        func_name,
-                       cwd,
+                       output_dir=cwd,
                        num_retry=3,
                        remove_comments=True,
                        cwd=cwd)
 
 
+INFO_BINARY = "/home/xiachunwei/Software/llvm-project/mybuilddir/bin/llvm-parser-checker"
+def get_all_function_names(llvm_ir_file):
+    cmd = [INFO_BINARY, llvm_ir_file]
+    cmd_out = subprocess.run(cmd, stdout=subprocess.PIPE)
+    if cmd_out.returncode != 0:
+        logger.warning(
+            f"Error Counting bb for: {llvm_ir_file} output: {cmd_out.stdout}, error: {cmd_out.stderr}")
+        return
+    llvm_ir_info = cmd_out.stdout.decode("utf-8")
+    out = json.loads(llvm_ir_info)
+    func_name_list = []
+    for func_dict in out["functions"]:
+        for func_name, func_info in func_dict.items():
+            func_name_list.append(func_name)
+    print(func_name_list)
+    return func_name_list
+
+
+COREUTILS_DIR = "/home/xiachunwei/Projects/coreutils"
+
+def test_decompilation_one_module(module_name: str):
+    func_name_list = get_all_function_names(
+        os.path.join(COREUTILS_DIR, f"src/{module_name}.ll"))
+    for func_name in func_name_list:
+        if func_name == "main" or func_name == "pretty_name":
+            # Skip the main function and pretty_name
+            continue
+        auto_test_one_function(func_name, cwd=COREUTILS_DIR)
+
+
 def test():
-    auto_test_one_function("pretty_name")
+    # auto_test_one_function("pretty_name")
+    # get_all_function_names(
+    #     "/home/xiachunwei/Projects/coreutils/src/tail.ll")
+    test_decompilation_one_module("tail")
 
 
 if __name__ == "__main__":

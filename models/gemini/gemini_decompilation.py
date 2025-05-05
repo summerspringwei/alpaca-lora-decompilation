@@ -10,7 +10,7 @@ from datasets import load_from_disk, Dataset
 from multiprocessing import Pool
 from utils.evaluate_exebench import compile_llvm_ir, eval_assembly
 from utils.preprocessing_assembly import preprocessing_assembly
-from .openai_helper import extract_llvm_code_from_response, format_compile_prompt, format_execution_prompt
+from utils.openai_helper import extract_llvm_code_from_response, format_decompile_prompt, format_compile_error_prompt, format_execution_error_prompt
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(filename)s: %(lineno)d - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -55,25 +55,6 @@ def prepare_prompt(record, remove_comments: bool = True):
     input_str =f"""Please decompile the following assembly code to LLVM IR and please place the final generated LLVM IR code between ```llvm and ```: {asm_code} \n Note that LLVM IR follow the Static Single Assignment format, which mean a variable can only be defined once."""
     prompt = input_str.format(asm_code=asm_code)
     return prompt
-
-
-# def extract_llvm_code_from_response(response):
-#     result = response.choices[0].message.content
-#     if "choices" in response and len(response["choices"]) > 0:
-#         result = response.choices[0].message.content
-#         parts = [choice["message"]["content"] for choice in response["choices"] if
-#                     "message" in choice and "content" in choice["message"]]
-#     if not parts and result:
-#         parts = [result]
-#     llvm_code = [extract_llvm_code(part) for part in parts]
-#     llvm_code = [code[0] for code in llvm_code if len(code) > 0]
-#     predict = llvm_code[0] if len(llvm_code) > 0 else ""
-#     if len(llvm_code) == 0:
-#         logger.warning("No LLVM code found in the response.")
-    
-#     return predict
-
-
 
 
 def evaluate_response(response, record, idx, validate_dir):
@@ -198,7 +179,7 @@ def correct_one(chat_response, idx: int, record: dict, output_dir: str, validati
             if error_msg.strip() == "":
                 logging.warning(f"Error message is empty for index {idx}")
                 break
-            prompt = format_compile_prompt(record["asm"]["code"][-1], predict, error_msg)
+            prompt = format_compile_error_prompt(record["asm"]["code"][-1], predict, error_msg)
         elif not validation_result["predict_execution_success"]:
             predict_assembly = ""
             with open(os.path.join(sample_dir, "predict.s"), 'r') as f:
@@ -206,7 +187,7 @@ def correct_one(chat_response, idx: int, record: dict, output_dir: str, validati
             if predict_assembly.strip() == "":
                 logging.warning(f"Assembly code is empty for index {idx}")
                 break
-            prompt = format_execution_prompt(record["asm"]["code"][-1], predict, predict_assembly)
+            prompt = format_execution_error_prompt(record["asm"]["code"][-1], predict, predict_assembly)
         response = huoshan_deepseek_r1(client, prompt)
         pickle.dump(response, open(os.path.join(output_dir, f"response_{idx}_retry_{count}.pkl"), "wb"))
         predict = extract_llvm_code_from_response(response)
