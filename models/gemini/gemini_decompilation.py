@@ -87,9 +87,11 @@ def evaluate_response(response, record, idx, validate_dir):
            
 
 def process_one(prompt: str, idx: int, output_dir: str, record: dict):
-    response = huoshan_deepseek_r1(client, prompt)
     # Make sure first save result to persistant storage
-    pickle.dump(response, open(os.path.join(output_dir, f"response_{idx}.pkl"), "wb"))
+    response_path = open(os.path.join(output_dir, f"response_{idx}.pkl"), "wb")
+    response = huoshan_deepseek_r1(client, prompt)
+    pickle.dump(response, response_path)
+    response = pickle.load(response_path)
     # validate the output
     validation_results = {}
     try:

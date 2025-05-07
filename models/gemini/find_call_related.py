@@ -58,8 +58,10 @@ def find_call_related(lines: List[str],
                 regs = abi_arg_regs.get(arch, [])
                 
                 # pattern = rf"^\s*((?:v?mov(?:b|l|q|sd|vps))|leaq|pushq|orq?)\s+[^,]+\s*,\s*%(?:{'|'.join(regs)})\b"
-                
-                
+                # Match instructions that end with any of the registers
+                pattern = rf"^\s*(?:v?mov(?:b|l|q|sd|ss|ups|aps|shdup|pd|ps)|lea|push|or|shl|vshuf|vextract|vcvt|vzeroupper)[a-z]*\s+.*,\s*%(?:{'|'.join(regs)})\b"
+                # Also match ymm registers for vector operations
+                pattern = rf"^\s*(?:v?mov(?:b|l|q|sd|ss|ups|aps|shdup|pd|ps|aps)|lea|push|or|shl|vshuf|vextract|vcvt|vzeroupper)[a-z]*\s+.*,\s*%(?:{'|'.join(regs)}|ymm[0-9]+)\b"
                 if regs and re.match(pattern, L):
                     matched = True
 

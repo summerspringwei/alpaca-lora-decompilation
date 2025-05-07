@@ -23,7 +23,7 @@ client = OpenAI(api_key=os.environ.get("ARK_STREAM_API_KEY"),
                 base_url="https://ark.cn-beijing.volces.com/api/v3",
                 timeout=1800)
 model_name = 'ep-20250317013717-m9ksl'
-
+USE_CACHE = True
 
 def huoshan_deepseek_r1(client, prompt: str):
     response = client.chat.completions.create(model=model_name,
@@ -43,7 +43,7 @@ def run_command(command, cwd):
     return result.returncode
 
 
-def parse_test_results(output):
+def parse_test_results(output: str) -> dict:
     result_dict = {}
     pattern = r"# (\w+):\s+(\d+)"
     matches = re.findall(pattern, output)
@@ -53,15 +53,17 @@ def parse_test_results(output):
 
 
 
-def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
+def one_pass(client, prompt: str, output_dir: str, module_name: str, func_name: str, count: int, cwd: str) -> str:
     # 0. Get response from the model
-    response = huoshan_deepseek_r1(client, prompt)
-    predict_compile_success = True
-    predict_execution_success = True
     response_file_path = os.path.join(
         output_dir, f"response_{func_name}_retry_{count}.pkl")
-    pickle.dump(response, open(response_file_path, "wb"))
-    # response = pickle.load(open(response_file_path, "rb"))
+    predict_compile_success = True
+    predict_execution_success = True
+    if not USE_CACHE:
+        response = huoshan_deepseek_r1(client, prompt)
+        pickle.dump(response, open(response_file_path, "wb"))
+    else:
+        response = pickle.load(open(response_file_path, "rb"))
     predict_llvm_ir = extract_llvm_code_from_response(response)
     # TODO: If the response is empty, we need to set a error message to retry
     if len(predict_llvm_ir) == 0:
@@ -69,7 +71,7 @@ def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
             f"Empty prediction for {func_name} on retry {count}")
         return "Empty prediction"
     # 1. Try to compile the decompiled LLVM IR with `llc`
-    name_hint = f"src/tail_predict_{func_name}"
+    name_hint = f"src/{module_name}_predict_{func_name}"
     predict_compile_success, assembly_path = compile_llvm_ir(
         predict_llvm_ir, output_dir, name_hint)
     predict_assembly = ""
@@ -96,8 +98,8 @@ def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
     # 3. try to link the decompiled ir with the original one
     # link and compile
     cmd = [
-        "llvm-link", f"src/tail_no_{func_name}.ll",
-        f"src/tail_predict_{func_name}.ll", "-o", "src/tail_predict.ll"
+        "llvm-link", f"src/{module_name}_no_{func_name}.ll",
+        f"src/{module_name}_predict_{func_name}.ll", "-o", f"src/{module_name}_predict.ll"
     ]
     results = subprocess.run(cmd,
                                 capture_output=True,
@@ -115,9 +117,9 @@ def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
             "predict_assembly": predict_assembly
         }
     # 4. Compile the linked LLVM IR to object file
-    target_object_file = "src/tail_predict.o"
+    target_object_file = f"src/{module_name}_predict.o"
     cmd = [
-        "clang", "-c", "src/tail_predict.ll", "-o", target_object_file
+        "clang", "-c", f"src/{module_name}_predict.ll", "-o", target_object_file
     ]
     results = subprocess.run(cmd,
                                 capture_output=True,
@@ -134,21 +136,21 @@ def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
         }
     predict_compile_success = True
     # 5. Link the object file to the executable binary
-    target_binary_path = os.path.join(cwd, "src/tail")
+    target_binary_path = os.path.join(cwd, f"src/{module_name}")
     if os.path.exists(target_binary_path):
         os.remove(target_binary_path)
     run_command([
         "clang", "-Wno-format-extra-args",
         "-Wno-implicit-const-int-float-conversion",
         "-Wno-tautological-constant-out-of-range-compare", "-g", "-O2",
-        "-Wl,--as-needed", "-o", "src/tail", target_object_file,
+        "-Wl,--as-needed", "-o", target_binary_path, target_object_file,
         "src/iopoll.o", "src/libver.a", "lib/libcoreutils.a",
         "lib/libcoreutils.a", "-ldl"
     ], cwd)
     # 6. Run the test
     cmd = [
         "make", "check",
-        "TESTS=\"$(make listtests | tr ' ' '\\n' | grep '^tests/tail')\""
+        f"TESTS=\"$(make listtests | tr ' ' '\\n' | grep '^tests/{module_name}')\""
     ]
     with tempfile.NamedTemporaryFile(delete=False, mode='w', suffix='.sh') as temp_script:
         temp_script.write("#!/bin/bash\n")
@@ -159,12 +161,13 @@ def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
     os.chmod(temp_script_path, 0o755)
     cmd = ["bash", temp_script_path]
     results = subprocess.run(cmd, capture_output=True, text=True)
-    os.unlink(temp_script_path)
+    # os.unlink(temp_script_path)
     logger.info(f"Test result: {results.stdout}")
     # 7. Check the test result
     test_result = parse_test_results(results.stdout)
-    predict_execution_success = test_result[
+    predict_execution_success = (test_result[
             "TOTAL"] == test_result["PASS"] + test_result["SKIP"]
+            and test_result["FAIL"] == 0 and test_result["TOTAL"] > 0)
     if predict_execution_success:
         logger.info(
             f"Decompilation successful for {func_name} on retry {count}"
@@ -187,12 +190,13 @@ def one_pass(client, prompt, output_dir, func_name, count, cwd) -> str:
 
 
 def decompilation_loop(client,
+                       module_name: str,
                        func_name: str,
-                       output_dir,
+                       output_dir: str,
                        num_retry: int = 10,
                        remove_comments: bool = True,
                        cwd="/home/xiachunwei/Projects/coreutils"):
-    with open(os.path.join(output_dir, f"src/tail_target_{func_name}.s"),
+    with open(os.path.join(output_dir, f"src/{module_name}_target_{func_name}.s"),
               'r') as f:
         asm_code = f.read()
     asm_code = preprocessing_assembly(asm_code,
@@ -206,8 +210,8 @@ def decompilation_loop(client,
         count += 1
         logger.info(f"Retrying {count} times for {func_name}")
         try:
-            info_dict = one_pass(client, prompt, output_dir, func_name, count, cwd)
-            print(info_dict)
+            info_dict = one_pass(client, prompt, output_dir, module_name, func_name, count, cwd)
+            print(info_dict['error_message'])
             predict_compile_success, predict_execution_success = info_dict[
                 "compile_success"], info_dict["execution_success"]
             if not predict_compile_success:
@@ -225,32 +229,34 @@ def decompilation_loop(client,
             logging.warning(f"Error during decompilation: {e}")
 
 
-def auto_test_one_function(func_name,
-                           cwd="/home/xiachunwei/Projects/coreutils"):
+def auto_test_one_function(module_name: str,
+                           func_name: str,
+                           cwd: str ="/home/xiachunwei/Projects/coreutils"):
     # Step 1: Extract one function from LLVM IR file
     if run_command([
-            "llvm-extract", f"--func={func_name}", "-S", "src/tail.ll", "-o",
-            f"src/tail_target_{func_name}.ll"
+            "llvm-extract", f"--func={func_name}", "-S", f"src/{module_name}.ll", "-o",
+            f"src/{module_name}_target_{func_name}.ll"
     ], cwd) != 0:
         return
 
     # Step 2: Delete one function from module
     if run_command([
             "llvm-extract", "-delete", f"--func={func_name}", "-S",
-            "src/tail.ll", "-o", f"src/tail_no_{func_name}.ll"
+            f"src/{module_name}.ll", "-o", f"src/{module_name}_no_{func_name}.ll"
     ], cwd) != 0:
         return
 
     # Step 3: Compile function LLVM IR to assembly
     if run_command([
-            "llc", f"src/tail_target_{func_name}.ll", "-o",
-            f"src/tail_target_{func_name}.s"
+            "llc", f"src/{module_name}_target_{func_name}.ll", "-o",
+            f"src/{module_name}_target_{func_name}.s"
     ], cwd) != 0:
         return
 
     # Step 4: Use the LLM to decompile assembly to IR
     # Placeholder for LLM decompilation logic (not specified in the prompt)
     decompilation_loop(client,
+                       module_name,
                        func_name,
                        output_dir=cwd,
                        num_retry=3,
@@ -282,11 +288,11 @@ def test_decompilation_one_module(module_name: str):
     func_name_list = get_all_function_names(
         os.path.join(COREUTILS_DIR, f"src/{module_name}.ll"))
     for func_name in func_name_list:
-        if func_name == "main" or func_name == "pretty_name":
+        if func_name == "main":
             # Skip the main function and pretty_name
             continue
-        auto_test_one_function(func_name, cwd=COREUTILS_DIR)
-
+        if func_name in ["recheck", "any_symlinks", "check_fspec"]:
+            auto_test_one_function(module_name, func_name, cwd=COREUTILS_DIR)
 
 def test():
     # auto_test_one_function("pretty_name")

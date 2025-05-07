@@ -7,13 +7,14 @@ import pathlib
 import shutil
 import tqdm
 import fire
-from typing import Dict
+from typing import Dict, List
 from multiprocessing import Pool
 from functools import partial
 from datasets import load_from_disk
 
 from exebench import Wrapper, diff_io, exebench_dict_to_dict, LLVMAssembler
 from utils.extract_code import extract_llmcompiler_code_blocks
+from utils.extract_asm_function_define import split_elf_functions
 
 logging.basicConfig(format='%(asctime)s - %(filename)s:%(lineno)s - %(message)s ', level=logging.INFO)
 
@@ -218,7 +219,26 @@ def match_record_with_row(path_to_record_mapping: Dict, path_to_row_mapping: Dic
             logging.error(f"Cannot find record for {path_func_def}")
     return path_to_record_row_mapping
 
-        
+
+def extract_wrapper_assembly_functions(row: Dict) -> Dict[str, List[str]]:
+    """Extract the wrapper assembly functions from the row.
+    Args:
+        row: Dict, the row of the dataset in exebench.
+    Returns:
+        functions: Dict[str, List[str]], the mapping from the function name to the assembly code.
+    """
+    c_deps=(row['synth_deps'] + '\n' +
+                    row['synth_io_pairs']['dummy_funcs'][0] + '\n').replace(
+                        'typedef int bool;', '')
+    assembly = row['asm']['code'][-1]
+    assembler = LLVMAssembler()
+    wrapper_assembly = assembler.get_wrapper_assembly(c_deps=c_deps + '\n', func_c_signature=row['func_head_types'].replace('extern', ''), func_assembly = assembly,
+                 cpp_wrapper=row['synth_exe_wrapper'])
+    with open(wrapper_assembly, 'r') as f:
+        wrapper_assembly = f.read()
+    return split_elf_functions(wrapper_assembly)
+
+
 def validate_exebench(path_to_json: str = "fexebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-step-80-bs-32-beams-1.json", 
                       path_to_dataset: str = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2", 
                       path_to_result: str = "exebench_train_synth_rich_io_filtered_llvm_ir_0_llm-compiler-13b-ftd-rl-ppo-step-80-bs-32-beams-1_validate_exebench.json",
