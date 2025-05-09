@@ -1,0 +1,4 @@
+Instruction does not dominate all uses!
+  %counter_next = add i32 %counter, 1
+  %counter = phi i32 [ 0, %if.end ], [ %counter_next, %for.inc ]
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_91/predict.ll': input module cannot be verified

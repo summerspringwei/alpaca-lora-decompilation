@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_52/predict.ll:41:24: error: use of undefined value '@TRIG_COUNT'
+  %37 = load i32, i32* @TRIG_COUNT
+                       ^

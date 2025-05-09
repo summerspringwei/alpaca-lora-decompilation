@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_99/predict.ll:26:3: error: instruction forward referenced with type 'label'
+  %21 = shl i32 %20, 31
+  ^

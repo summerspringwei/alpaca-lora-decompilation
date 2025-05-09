@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_30/predict.ll:2:36: error: use of undefined type named 'struct.object_id'
+%struct.ref_iterator = type { i8*, %struct.object_id*, i32 }
+                                   ^

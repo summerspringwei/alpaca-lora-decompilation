@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_61/predict.ll:26:22: error: '%20' defined with type 'ptr' but expected 'i64'
+  %23 = add i64 %22, %20
+                     ^

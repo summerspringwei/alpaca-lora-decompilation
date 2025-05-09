@@ -1,0 +1,13 @@
+Instruction does not dominate all uses!
+  %fd1 = load i32, ptr %fd_ptr1, align 4
+  call void @aeDeleteFileEvent(i32 %server_ae, i32 %fd1, i32 1)
+Instruction does not dominate all uses!
+  %fd1 = load i32, ptr %fd_ptr1, align 4
+  call void @aeDeleteFileEvent(i32 %server_ae, i32 %fd1, i32 2)
+Instruction does not dominate all uses!
+  %fd1 = load i32, ptr %fd_ptr1, align 4
+  %call = call i32 @close(i32 %fd1)
+Instruction does not dominate all uses!
+  %fd_ptr1 = getelementptr inbounds %struct.client, ptr %0, i32 0, i32 0
+  store i32 -1, ptr %fd_ptr1, align 4
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_4/predict.ll': input module cannot be verified

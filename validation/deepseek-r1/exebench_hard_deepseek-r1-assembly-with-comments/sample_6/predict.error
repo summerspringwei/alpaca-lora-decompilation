@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_6/predict.ll:44:114: error: use of undefined value '%edge.e1'
+  %call = tail call i32 @RenderEdgeMultiInit(%struct.edge* %edge, i32 65536, i32* nonnull %edge.e2, i32* nonnull %edge.e1)
+                                                                                                                 ^

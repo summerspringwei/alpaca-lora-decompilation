@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_65/predict.ll:108:18: error: use of undefined value '@dummyinit'
+  tail call void @dummyinit(ptr %0, ptr %1, i32 %edx, i32 %ecx)
+                 ^

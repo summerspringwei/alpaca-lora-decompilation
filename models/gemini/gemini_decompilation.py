@@ -88,10 +88,12 @@ def evaluate_response(response, record, idx, validate_dir):
 
 def process_one(prompt: str, idx: int, output_dir: str, record: dict):
     # Make sure first save result to persistant storage
-    response_path = open(os.path.join(output_dir, f"response_{idx}.pkl"), "wb")
-    response = huoshan_deepseek_r1(client, prompt)
-    pickle.dump(response, response_path)
-    response = pickle.load(response_path)
+    pkl_file_path = os.path.join(output_dir, f"response_{idx}.pkl")
+    if not os.path.exists(pkl_file_path):
+        response = huoshan_deepseek_r1(client, prompt)
+        pickle.dump(response, open(pkl_file_path, "wb"))
+    else:
+        response = pickle.load(open(pkl_file_path, "rb"))
     # validate the output
     validation_results = {}
     try:
@@ -146,23 +148,22 @@ def validate_all(dataset, output_dir):
     
 
 def main(dataset_dir_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff_sample_100",
-        #  output_dir = "validation/openai-gpt/gpt-4.1-assembly-with-comments"
-        output_dir = "validation/deepseek-r1/deepseek-r1-assembly-with-comments/"
+        response_output_dir = "validation/deepseek-r1/deepseek-r1-assembly-with-comments/"
          ):
     
     dataset = load_from_disk(dataset_dir_path)
     
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+    if not os.path.exists(response_output_dir):
+        os.makedirs(response_output_dir, exist_ok=True)
     
-    # response = pickle.load(open(os.path.join(output_dir, "response_0_4.pkl"), "rb"))
+    # response = pickle.load(open(os.path.join(response_output_dir, "response_0_4.pkl"), "rb"))
     # print(response.choices[0].message.content)
-    # validation_results = evaluate_response(response, dataset[3], 3, output_dir)
+    # validation_results = evaluate_response(response, dataset[3], 3, response_output_dir)
     # print(validation_results)
-    # LLM_predict_openai_API(dataset, output_dir, num_processes=16, remove_comments=False)
-    # LLM_predict_openai_API_batch(dataset, output_dir, batch_size=4)
+    LLM_predict_openai_API(dataset, response_output_dir, num_processes=16, remove_comments=False)
+    # LLM_predict_openai_API_batch(dataset, response_output_dir, batch_size=4)
 
-    validate_all(dataset, output_dir)
+    validate_all(dataset, response_output_dir)
 
 
 
@@ -208,10 +209,11 @@ def correct_one(chat_response, idx: int, record: dict, output_dir: str, validati
         return False
         
 
-def fix_all():
-    dir_path = "validation/deepseek-r1/deepseek-r1-assembly-with-comments/"
+def fix_all(dataset_dir_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff_sample_100",
+            dir_path = "validation/deepseek-r1/deepseek-r1-assembly-with-comments/"):
+    
     response = pickle.load(open(os.path.join(dir_path, "results.pkl"), "rb"))
-    dataset_dir_path = "/home/xiachunwei/Datasets/filtered_exebench/train_synth_rich_io_filtered_llvm_ir/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff_sample_100"
+    
     dataset = load_from_disk(dataset_dir_path)
     fix_count = 0
     for idx, (chat, validation) in enumerate(response):
@@ -224,5 +226,7 @@ def fix_all():
 
 
 if __name__ == "__main__":
-    # main()
-    fix_all()
+    dataset_dir_path = "/home/xiachunwei/Datasets/filtered_exebench/filtered_exebench/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff_hard_sample_100"
+    response_output_dir = "validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/"
+    main(dataset_dir_path, response_output_dir)
+    # fix_all()

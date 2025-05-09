@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_86/predict.ll:78:13: error: '%hw0' defined with type 'i32' but expected 'i64'
+  store i64 %hw0, ptr %stack_r14, align 8
+            ^

@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_85/predict.ll:15:114: error: invalid use of function-local name
+  %current_exposure = load i32, i32* getelementptr inbounds (%struct.exposure_control, %struct.exposure_control* %ctrl, i64 0, i32 0), align 4
+                                                                                                                 ^

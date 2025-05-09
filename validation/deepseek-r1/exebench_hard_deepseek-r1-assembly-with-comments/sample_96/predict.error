@@ -1,0 +1,4 @@
+Instruction does not dominate all uses!
+  %12 = phi i32 [ %2, %LBB0_2 ], [ %2, %LBB0_1 ]
+  %105 = phi i32 [ %104, %LBB0_32 ], [ %72, %LBB0_15 ], [ %18, %LBB0_3 ], [ %12, %LBB0_18 ], [ %76, %LBB0_20 ], [ %37, %LBB0_7 ], [ %89, %LBB0_27 ]
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_96/predict.ll': input module cannot be verified

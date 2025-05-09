@@ -1,0 +1,3 @@
+PHINode should have one entry for each predecessor of its parent basic block!
+  %r14d = phi i32 [ 0, %LBB0_5 ], [ 1, %if.then28 ]
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_98/predict.ll': input module cannot be verified

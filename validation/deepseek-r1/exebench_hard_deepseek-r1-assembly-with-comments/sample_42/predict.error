@@ -1,0 +1,12 @@
+PHINode should have one entry for each predecessor of its parent basic block!
+  %rbp.0 = phi i32 [ 0, %if.end ], [ %rbp.1, %if.end45 ], [ %rbp.1, %if.then51 ]
+Instruction does not dominate all uses!
+  %r12.1 = add i32 %r12.0, %47
+  %r12.0 = phi i32 [ 0, %if.end ], [ %r12.1, %if.end45 ], [ %r12.1, %if.then51 ]
+Instruction does not dominate all uses!
+  %r12.1 = add i32 %r12.0, %47
+  %r12.0 = phi i32 [ 0, %if.end ], [ %r12.1, %if.end45 ], [ %r12.1, %if.then51 ]
+Instruction does not dominate all uses!
+  %r12.1 = add i32 %r12.0, %47
+  %r12.2 = phi i32 [ %r12.1, %if.then26 ], [ %r12.1, %if.then42 ], [ %r12.0, %select.false ]
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_42/predict.ll': input module cannot be verified

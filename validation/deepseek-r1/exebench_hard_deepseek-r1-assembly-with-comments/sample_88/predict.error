@@ -1,0 +1,3 @@
+cannot guarantee tail call due to mismatched parameter counts
+  musttail call void @os_set_colour(i32 %conv100, i32 %conv100.)
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_88/predict.ll': input module cannot be verified

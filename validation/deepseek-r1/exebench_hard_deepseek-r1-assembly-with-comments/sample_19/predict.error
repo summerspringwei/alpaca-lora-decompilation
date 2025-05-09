@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_19/predict.ll:8:48: error: constant expression type mismatch: got type '[2 x i8]' but expected '[4 x i8]'
+@.str = private unnamed_addr constant [4 x i8] c"-\00", section "rodata.cst4"
+                                               ^

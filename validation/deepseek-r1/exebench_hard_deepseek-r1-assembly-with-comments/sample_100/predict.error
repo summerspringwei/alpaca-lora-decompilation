@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_100/predict.ll:79:3: error: instruction forward referenced with type 'i64'
+  %44 = load ptr, ptr %43, align 8
+  ^

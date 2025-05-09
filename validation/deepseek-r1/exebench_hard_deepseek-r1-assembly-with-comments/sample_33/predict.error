@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_33/predict.ll:94:44: error: '%r14' defined with type 'i32' but expected 'i64'
+  %bildx.offset = add nsw i64 %bildx.load, %r14
+                                           ^

@@ -1,0 +1,4 @@
+Instruction does not dominate all uses!
+  %25 = load i32, ptr @COMREG2_DOUTEN1, align 4
+  %12 = phi i32 [ undef, %for.body.lr.ph ], [ %25, %for.inc ]
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_66/predict.ll': input module cannot be verified

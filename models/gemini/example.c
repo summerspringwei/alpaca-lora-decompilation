@@ -78,10 +78,13 @@ struct Complex {
     double real;
     double imag;
 };
+
+int global_scale = 10;
+
 struct Complex multiplyComplex(struct Complex a, struct Complex b) {
     struct Complex result;
-    result.real = a.real * b.real - a.imag * b.imag;
-    result.imag = a.real * b.imag + a.imag * b.real;
+    result.real = (a.real * b.real - a.imag * b.imag) * global_scale;
+    result.imag = (a.real * b.imag + a.imag * b.real) * global_scale;
     return result;
 }
 

@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_83/predict.ll:46:37: error: use of undefined value '@BIRTH_INTERVAL'
+  %birth_interval = load float, ptr @BIRTH_INTERVAL, align 4
+                                    ^

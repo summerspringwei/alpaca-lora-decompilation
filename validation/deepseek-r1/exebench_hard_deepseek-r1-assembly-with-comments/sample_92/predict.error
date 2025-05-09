@@ -1,0 +1,7 @@
+Instruction does not dominate all uses!
+  %collide_next = or i1 %collide, %collide_i
+  %collide = phi i1 [ false, %check_robots ], [ %collide_next, %loop.inc ]
+Instruction does not dominate all uses!
+  %collide_next = or i1 %collide, %collide_i
+  br i1 %collide_next, label %exit, label %update
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_92/predict.ll': input module cannot be verified
