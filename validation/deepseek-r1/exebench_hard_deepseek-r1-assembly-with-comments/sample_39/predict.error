@@ -1,3 +1,3 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_39/predict.ll:70:25: error: '%23' defined with type 'i32' but expected 'i64'
-  %24 = icmp eq i64 %i, %23
-                        ^
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_39/predict.ll:72:6: error: expected '=' after instruction id
+  %23_zext = zext i32 %23 to i64
+     ^

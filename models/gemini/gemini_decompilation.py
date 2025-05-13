@@ -228,5 +228,5 @@ def fix_all(dataset_dir_path = "/home/xiachunwei/Datasets/filtered_exebench/trai
 if __name__ == "__main__":
     dataset_dir_path = "/home/xiachunwei/Datasets/filtered_exebench/filtered_exebench/train_synth_rich_io_filtered_0_llvm_extract_func_ir_assembly_O2_llvm_diff_hard_sample_100"
     response_output_dir = "validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/"
-    main(dataset_dir_path, response_output_dir)
-    # fix_all()
+    # main(dataset_dir_path, response_output_dir)
+    fix_all(dataset_dir_path, response_output_dir)

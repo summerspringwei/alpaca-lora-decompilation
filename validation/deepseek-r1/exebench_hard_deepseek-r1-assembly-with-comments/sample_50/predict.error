@@ -1,3 +1,10 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_50/predict.ll:6:23: error: use of undefined value '@F_ISSET'
-  %F_ISSET = call i64 @F_ISSET(ptr %1, i32 %VC_C1SET)
-                      ^
+Instruction does not dominate all uses!
+  %rbx_8 = getelementptr inbounds i8, ptr %1, i64 8
+  store i64 %dec_stack8, ptr %rbx_8, align 8
+Instruction does not dominate all uses!
+  %rbx_24 = getelementptr inbounds i8, ptr %1, i64 24
+  %rbx_24_val = load i64, ptr %rbx_24, align 8
+Instruction does not dominate all uses!
+  %rbx_8 = getelementptr inbounds i8, ptr %1, i64 8
+  %rbx_8_val2 = load i64, ptr %rbx_8, align 8
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_50/predict.ll': input module cannot be verified

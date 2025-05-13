@@ -1,3 +1,3 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_11/predict.ll:60:70: error: invalid use of function-local name
-  %32 = load i32, i32* getelementptr inbounds ([4 x i32], [4 x i32]* %16, i64 0, i64 0), align 4
-                                                                     ^
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_11/predict.ll:50:73: error: '%next_idx' defined with type 'i32' but expected 'i64'
+  %array_elem2 = getelementptr [4 x i32], [4 x i32]* %stack, i64 0, i64 %next_idx
+                                                                        ^

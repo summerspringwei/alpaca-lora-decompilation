@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_101/predict.ll:117:50: error: '%34' defined with type 'ptr' but expected 'i64'
+  %36 = getelementptr inbounds ptr, ptr %35, i64 %34
+                                                 ^

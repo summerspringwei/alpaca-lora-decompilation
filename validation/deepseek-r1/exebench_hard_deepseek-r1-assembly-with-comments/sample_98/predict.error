@@ -1,3 +1,4 @@
-PHINode should have one entry for each predecessor of its parent basic block!
-  %r14d = phi i32 [ 0, %LBB0_5 ], [ 1, %if.then28 ]
+Instruction does not dominate all uses!
+  %vtop_post_swap = load ptr, ptr @vtop, align 8
+  %vtop_then34 = phi ptr [ %vtop_phi_1, %LBB0_5 ], [ %vtop_post_swap, %LBB0_9 ]
 llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_98/predict.ll': input module cannot be verified

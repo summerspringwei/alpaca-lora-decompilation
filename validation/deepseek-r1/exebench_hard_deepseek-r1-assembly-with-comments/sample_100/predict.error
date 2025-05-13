@@ -1,3 +1,4 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_100/predict.ll:79:3: error: instruction forward referenced with type 'i64'
-  %44 = load ptr, ptr %43, align 8
-  ^
+Instruction does not dominate all uses!
+  %count.1 = phi i32 [ %count.0152, %if.end ], [ %count.0152, %lor.lhs.false8 ], [ %count.0152, %lor.lhs.false ], [ %count.0152, %for.body ], [ %82, %if.then144 ], [ %count.0152, %for.end141 ], [ %count.0152, %land.rhs.lr.ph ], [ %count.0152, %if.end63 ], [ %count.0152, %for.inc156.loopexit ]
+  %retval.0 = phi i32 [ 0, %entry ], [ %count.1, %for.inc156 ], [ %count.1, %for.body77 ]
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_100/predict.ll': input module cannot be verified

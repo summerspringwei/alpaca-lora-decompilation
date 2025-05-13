@@ -52,6 +52,8 @@ def extract_called_functions(assembly: str)->List[str]:
     functions = list(set(functions))
     return functions
 
+
+
 def get_called_functions_details():
     """
     We may need to find the assembly code of the called functions.

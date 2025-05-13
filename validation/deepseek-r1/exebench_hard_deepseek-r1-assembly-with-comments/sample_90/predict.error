@@ -1,3 +1,3 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_90/predict.ll:32:32: error: '%errno_val' defined with type 'i32' but expected 'ptr'
-  %errno_code = load i32, i32* %errno_val
-                               ^
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_90/predict.ll:35:43: error: unexpected ellipsis in argument list for non-musttail call
+  %errno_ptr = call ptr @__errno_location(...)
+                                          ^

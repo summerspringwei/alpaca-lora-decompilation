@@ -1,0 +1,3 @@
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_26/predict.ll:75:3: error: instruction expected to be numbered '%52'
+  %56 = or <4 x i32> %39, %23
+  ^

@@ -1,3 +1,3 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_95/predict.ll:40:28: error: expected '(' after constantexpr cast
-  %and = and i32 %2, trunc i64 %shl to i32
-                           ^
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_95/predict.ll:44:22: error: '%shl' defined with type 'i64' but expected 'i32'
+  %and = and i32 %2, %shl
+                     ^

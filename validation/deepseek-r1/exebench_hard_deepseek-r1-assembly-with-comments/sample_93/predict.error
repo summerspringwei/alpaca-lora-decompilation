@@ -1,0 +1,11 @@
+PHI node entries do not match predecessors!
+  %50 = phi i32 [ 4, %LBB0_18 ], [ %41, %LBB0_14 ]
+label %LBB0_14
+label %LBB0_15
+Instruction does not dominate all uses!
+  %74 = or i32 %58, %56
+  call void @DrawWindowFull(i32 %57, i32 %74, i32 1)
+Instruction does not dominate all uses!
+  %74 = or i32 %58, %56
+  %110 = and i32 %74, -256
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_93/predict.ll': input module cannot be verified

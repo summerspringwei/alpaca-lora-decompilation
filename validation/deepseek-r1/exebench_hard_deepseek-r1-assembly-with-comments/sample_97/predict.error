@@ -1,3 +1,3 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_97/predict.ll:104:54: error: global variable reference must have pointer type
-  %eq_s = call i32 @eq_s_b(%struct* %rbx, i32 1, i32 @s_16)
-                                                     ^
+PHINode should have one entry for each predecessor of its parent basic block!
+  %retval = phi i32 [ %r14, %LBB0_2 ], [ %ebp4, %cleanup23 ], [ %ebp7, %lab6 ], [ %ebp9, %cleanup120 ], [ %ebp12, %slice_del_block ], [ %ebp8, %lab4 ], [ %ebp6, %lab5 ], [ %ebp6, %if_end80 ], [ %ebp14, %cleanup143 ], [ %ebp16, %postlude_block ], [ 1, %final_cleanup ]
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_97/predict.ll': input module cannot be verified

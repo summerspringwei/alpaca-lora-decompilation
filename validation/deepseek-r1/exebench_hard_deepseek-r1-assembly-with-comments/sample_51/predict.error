@@ -1,3 +1,5 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_51/predict.ll:71:3: error: instruction forward referenced with type 'ptr'
-  %38 = shl nuw nsw i32 %37, 4
-  ^
+PHINode should have one entry for each predecessor of its parent basic block!
+  %bytes_read.1.0 = phi i32 [ 0, %if.else57 ], [ %add107, %if.else102 ]
+PHINode should have one entry for each predecessor of its parent basic block!
+  %bytes_read.3 = phi i32 [ 0, %while.cond.preheader ], [ %bytes_read.0, %while.body ], [ %bytes_read.0, %if.end ], [ %add, %if.end12 ], [ %fragment_idx.1, %while.end117 ], [ %bytes_read.1.0, %if.end65 ], [ %bytes_read.1.0, %while.body61 ], [ %bytes_read.1.0, %if.end73 ]
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_51/predict.ll': input module cannot be verified

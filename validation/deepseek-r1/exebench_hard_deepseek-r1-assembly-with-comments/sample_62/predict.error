@@ -1,3 +1,4 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_62/predict.ll:4:33: error: expected type
-%struct.Scsi_Host = type { i32, ... }
-                                ^
+Instruction does not dominate all uses!
+  %rport_i8 = bitcast ptr %rport to ptr
+  %role_field_c = getelementptr inbounds i8, ptr %rport_i8, i64 4
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_62/predict.ll': input module cannot be verified

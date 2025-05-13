@@ -1,0 +1,4 @@
+PHI nodes not grouped at top of basic block!
+  %new_found_idx = phi i32 [ %found_idx, %loop.body ]
+label %loop.inc
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_84/predict.ll': input module cannot be verified

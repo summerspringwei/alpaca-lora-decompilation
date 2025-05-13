@@ -1,4 +1,11 @@
+PHI node entries do not match predecessors!
+  %prev_index_next = phi i32 [ %prev_index, %check_playeringame ], [ %index_masked, %process_target ], [ %prev_index, %if.end19 ], [ %prev_index, %check_invisible ], [ %prev_index, %check_mobj ], [ %prev_index, %check_removed ], [ %prev_index, %check_sight ]
+label %process_target
+label %calc_distance
 Instruction does not dominate all uses!
-  %counter_next = add i32 %counter, 1
-  %counter = phi i32 [ 0, %if.end ], [ %counter_next, %for.inc ]
+  %new_distance = select i1 %is_closer, i64 %distance, i64 %best_distance
+  %best_distance_next = phi i64 [ %best_distance, %check_playeringame ], [ %new_distance, %process_target ], [ %best_distance, %if.end19 ], [ %best_distance, %check_invisible ], [ %best_distance, %check_mobj ], [ %best_distance, %check_removed ], [ %best_distance, %check_sight ]
+Instruction does not dominate all uses!
+  %new_target = select i1 %is_closer, ptr %mobj_val, ptr %current_target
+  %current_target_next = phi ptr [ %current_target, %check_playeringame ], [ %new_target, %process_target ], [ %current_target, %if.end19 ], [ %current_target, %check_invisible ], [ %current_target, %check_mobj ], [ %current_target, %check_removed ], [ %current_target, %check_sight ]
 llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_91/predict.ll': input module cannot be verified

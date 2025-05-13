@@ -1,0 +1,3 @@
+PHINode should have one entry for each predecessor of its parent basic block!
+  %retval.0 = phi i32 [ 1, %if.end38 ], [ %call, %if.then ], [ %call4, %if.end14 ], [ %call17, %if.then26 ], [ %call28, %if.then37 ], [ %call28, %if.end27 ]
+llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_78/predict.ll': input module cannot be verified

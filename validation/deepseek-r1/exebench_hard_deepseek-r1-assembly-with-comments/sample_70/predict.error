@@ -1,3 +1,3 @@
-llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_70/predict.ll:2:17: error: expected type
-    i32,        // 0: time
-                ^
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_70/predict.ll:70:38: error: expected '(' in compare constantexpr
+  %exp.adjusted = select i1 icmp sgt i32 %exp.offset, 480, i32 480000, i32 %exp.unadjusted
+                                     ^

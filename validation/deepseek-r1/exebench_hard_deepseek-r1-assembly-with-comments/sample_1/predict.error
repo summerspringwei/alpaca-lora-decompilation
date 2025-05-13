@@ -1,3 +1,5 @@
-PHINode should have one entry for each predecessor of its parent basic block!
-  %79 = phi i32 [ 1, %LBB0_13 ], [ 0, %entry ], [ 0, %LBB0_2 ], [ 0, %LBB0_5 ], [ 0, %LBB0_6 ]
+PHI node entries do not match predecessors!
+  %76 = phi i64 [ %75, %LBB0_11 ], [ %76, %LBB0_12 ]
+label %LBB0_11
+label %LBB0_10
 llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_1/predict.ll': input module cannot be verified

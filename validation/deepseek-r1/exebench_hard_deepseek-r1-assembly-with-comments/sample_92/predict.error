@@ -1,7 +1,3 @@
-Instruction does not dominate all uses!
-  %collide_next = or i1 %collide, %collide_i
-  %collide = phi i1 [ false, %check_robots ], [ %collide_next, %loop.inc ]
-Instruction does not dominate all uses!
-  %collide_next = or i1 %collide, %collide_i
-  br i1 %collide_next, label %exit, label %update
-llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_92/predict.ll': input module cannot be verified
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_92/predict.ll:98:68: error: '%target_idx' defined with type 'i32' but expected 'i64'
+  %target = getelementptr inbounds %struct.Robot, ptr %robots, i64 %target_idx
+                                                                   ^

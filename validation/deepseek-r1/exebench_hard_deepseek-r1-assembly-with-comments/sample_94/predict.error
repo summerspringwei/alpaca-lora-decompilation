@@ -1,4 +1,3 @@
-Instruction does not dominate all uses!
-  %35 = sub i32 %34, 1
-  store i32 %35, ptr %66, align 4
-llc: error: 'validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_94/predict.ll': input module cannot be verified
+llc: error: llc: validation/deepseek-r1/exebench_hard_deepseek-r1-assembly-with-comments/sample_94/predict.ll:50:3: error: instruction expected to be numbered '%16'
+  %21 = sub i32 %ebx.0, 1
+  ^
