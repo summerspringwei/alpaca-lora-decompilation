@@ -8,7 +8,8 @@ from datasets import load_from_disk, Dataset, DatasetDict
 """
 Example of function info: {'name': 'foo', 'unused_args': [], 
     'struct_args': False, 'has_globals': True, 
-    'called_functions': ['mpt3sas_base_get_iocstate', 'scsi_host_busy', 'wait_event_timeout']}
+    'called_functions': ['mpt3sas_base_get_iocstate', 'scsi_host_busy', 'wait_event_timeout']
+    'bbcount': [3, 5, 8]}
 """
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -25,6 +26,7 @@ except:
     # Keep default value if which command fails
     pass
 
+# Initialize tokenizer
 tokenizer = AutoTokenizer.from_pretrained("/home/xiachunwei/Dataset/Qwen3-0.6B", trust_remote_code=True)
 
 def filter_cannot_parse(record):
@@ -47,10 +49,31 @@ def map_func_info(record):
         llvm_ir_info = cmd_out.stdout.decode("utf-8")
         out = json.loads(llvm_ir_info)
         record['func_info'] = out
-        tokenized_question = tokenizer(record['asm']['code'][-1])
-        record['token_length'] = len(tokenized_question["input_ids"])
+    # Use the O0 version LLVM IR to generate func_info all_struct_fields_accessed
+    with tempfile.NamedTemporaryFile(delete=True) as f:
+        f.write(record["llvm_ir_X86_O0"].encode("utf-8"))
+        f.flush()
+        cmd = [info_binary, f.name]
+        cmd_out = subprocess.run(cmd, stdout=subprocess.PIPE)
+        llvm_ir_info = cmd_out.stdout.decode("utf-8")
+        out = json.loads(llvm_ir_info)
+        if len(record['func_info']["functions"]) > 0:
+            print(record["llvm_ir_X86_O0"])
+            print(out)
+            print(record['llvm_ir']['code'][-1])
+            print("#"*100)
+            record['func_info']["functions"][0]['all_struct_fields_accessed'] = out["functions"][0]['all_struct_fields_accessed']
     
-        return record
+    # Fix tokenization by properly handling the text input
+    asm_code = record['asm']['code'][-1]
+    if isinstance(asm_code, str):
+        tokenized_question = tokenizer(asm_code, return_tensors="pt")
+        record['token_length'] = len(tokenized_question["input_ids"][0])
+    else:
+        record['token_length'] = 0
+        print(f"Warning: Invalid assembly code format in record: {asm_code}")
+    
+    return record
 
 
 def filter_unused_args(record):
@@ -84,3 +107,10 @@ def filter_has_loops(record):
         if func_dict['num_loops'] > 0:
             return True
     return False
+
+
+def get_num_instructions(record):
+    num_instructions = 0
+    for func_dict in record['func_info']['functions']:
+        num_instructions += sum(func_dict['bbcount'])
+    return num_instructions

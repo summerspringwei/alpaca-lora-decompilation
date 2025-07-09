@@ -62,13 +62,9 @@ def get_bulk_list(train_dataset: list)->dict[str, list]:
     """
     bulk_len_record = {}
     for record in tqdm.tqdm(train_dataset):
-        if 'llvm_ir' not in record:
-            continue
-        if 'bb_count' not in record['llvm_ir']:
-            continue
-        if 'bbcount' not in record['llvm_ir']['bb_count']:
-            continue
-        bb_count = record['llvm_ir']['bb_count']['bbcount']
+        bb_count = 0
+        for func_info in record['func_info']['functions']:
+            bb_count += len(func_info['bbcount'])
         if bb_count not in bulk_len_record:
             bulk_len_record[bb_count] = [record, ]
         else:
