@@ -42,3 +42,4 @@ checkpoints/
 runs/
 validation/glm-z1-32B/
 validation/openai-gpt/
+figures/
